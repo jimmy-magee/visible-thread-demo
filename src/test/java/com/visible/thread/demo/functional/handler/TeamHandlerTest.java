@@ -22,6 +22,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
@@ -81,8 +82,9 @@ public class TeamHandlerTest {
 
         when(teamRepository.save(any())).thenReturn(teamMono);
 
+        when(userRepository.findAll()).thenReturn(Flux.empty());
 
-        webTestClient.post().uri("/api/v1/{organisationId}/teams", teamId)
+        webTestClient.post().uri("/api/v1/{organisationId}/teams", organisationId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(Mono.just(requestBody), NewTeamForm.class)
@@ -129,6 +131,7 @@ public class TeamHandlerTest {
 
         when(teamRepository.findById(anyString())).thenReturn(teamMono);
         when(teamRepository.save(any())).thenReturn(teamMono);
+        when(userRepository.findAll()).thenReturn(Flux.empty());
 
         webTestClient.post().uri("/api/v1/{teamId}/teams/{teamId}", teamId, teamId)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -172,8 +175,6 @@ public class TeamHandlerTest {
                 .organisationId(organisationId)
                 .build();
 
-        Mono<Organisation> organisationMono = Mono.just(organisation);
-
         Mono<Team> teamMono = Mono.just(team);
 
         when(teamRepository.findById(anyString())).thenReturn(teamMono);
@@ -212,6 +213,7 @@ public class TeamHandlerTest {
         Flux<Team> teamFlux = Flux.just(teamOne, teamTwo, teamThree);
 
         when(teamRepository.findAll()).thenReturn(teamFlux);
+        when(userRepository.findAll()).thenReturn(Flux.empty());
 
         webTestClient.get().uri("/api/v1/teams")
                 .accept(MediaType.APPLICATION_JSON)
@@ -241,22 +243,21 @@ public class TeamHandlerTest {
         requestBody.setName("Software Engineering Team");
         requestBody.setDescription("Soft Eng Team Desc");
 
-        Organisation organisation = Organisation.builder().id(organisationId).build();
-
         Team team = Team.builder()
                 .id(teamId)
                 .name("Engineering Team")
                 .description("Eng Team Desc")
                 .organisationId(organisationId)
+                .users(new HashSet<>())
                 .build();
 
-        Mono<Organisation> organisationMono = Mono.just(organisation);
 
         Mono<Team> teamMono = Mono.just(team);
 
         when(teamRepository.findById(anyString())).thenReturn(teamMono);
+        when(userRepository.findAll()).thenReturn(Flux.empty());
 
-        webTestClient.get().uri("/api/v1/{teamId}/teams/{teamId}", teamId, teamId)
+        webTestClient.get().uri("/api/v1/{organisationId}/teams/{teamId}", organisationId, teamId)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk()
