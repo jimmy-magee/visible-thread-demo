@@ -26,7 +26,7 @@ public class TeamRouterConfig {
     @Bean
     public RouterFunction teamRoute(TeamHandler teamHandler) {
         return RouterFunctions
-                .route(GET("/api/v1/teams").and(accept(APPLICATION_JSON)), teamHandler::getAllTeams)
+                .route(GET("/api//v1/teams").and(accept(APPLICATION_JSON)), teamHandler::getAllTeams)
                 .andRoute(GET("/api/v1/{organisationId}/teams").and(accept(APPLICATION_JSON)), teamHandler::getTeamsByOrganisationId)
                 .andRoute(GET("/api/v1/{organisationId}/teams/{teamId}").and(accept(APPLICATION_JSON)), teamHandler::getTeamById)
                 .andRoute(GET("/api/v1/{organisationId}/team/{name}").and(accept(APPLICATION_JSON)), teamHandler::getTeamByName)

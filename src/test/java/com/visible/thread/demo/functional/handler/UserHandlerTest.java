@@ -2,6 +2,7 @@ package com.visible.thread.demo.functional.handler;
 
 import com.visible.thread.demo.config.SecurityConfig;
 import com.visible.thread.demo.dto.forms.NewUserForm;
+import com.visible.thread.demo.dto.forms.UpdateUserForm;
 import com.visible.thread.demo.dto.representations.UserRepresentation;
 import com.visible.thread.demo.functional.config.UserRouterConfig;
 import com.visible.thread.demo.model.Team;
@@ -80,7 +81,7 @@ public class UserHandlerTest {
         when(userRepository.save(any())).thenReturn(userMono);
 
 
-        webTestClient.post().uri("/api/v1/{teamId}/users", teamId)
+        webTestClient.post().uri("/api/v1/users", teamId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(Mono.just(requestBody), NewUserForm.class)
@@ -98,7 +99,7 @@ public class UserHandlerTest {
 
     @Test
     public void testUpdateUser() {
-        String teamId = "org-id-123";
+
         String userId = "user-id-123";
 
         UserRepresentation userRepresentation = UserRepresentation.builder().id("1").lastname("Pantic").build();
@@ -124,10 +125,10 @@ public class UserHandlerTest {
         when(userRepository.save(any())).thenReturn(userMono);
 
 
-        webTestClient.post().uri("/api/v1/{teamId}/users/{userId}", teamId, userId)
+        webTestClient.post().uri("/api/v1/users/{userId}", userId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
-                .body(Mono.just(requestBody), NewUserForm.class)
+                .body(Mono.just(requestBody), UpdateUserForm.class)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(UserRepresentation.class)
@@ -144,8 +145,7 @@ public class UserHandlerTest {
     @Test
     public void testDeleteUser() {
 
-        String teamId = "org-id-123";
-        String userId = "org-123";
+        String userId = "user-123";
 
 
         User user = User.builder()
@@ -161,7 +161,7 @@ public class UserHandlerTest {
         when(userRepository.findById(anyString())).thenReturn(userMono);
         when(userRepository.delete(any())).thenReturn(Mono.empty());
 
-        webTestClient.post().uri("/api/v1/{teamId}/users/{userId}", teamId, userId)
+        webTestClient.post().uri("/api/v1/users/{userId}", userId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
@@ -172,8 +172,6 @@ public class UserHandlerTest {
 
     @Test
     public void testGetAllUsers() {
-
-        String teamId = "org-id-123";
 
         User userOne = User.builder()
                 .id("1")
@@ -200,8 +198,10 @@ public class UserHandlerTest {
                 .build();
 
         Flux<User> userFlux = Flux.just(userOne, userTwo, userThree);
-        
-        webTestClient.get().uri("/api/v1/{teamId}/users", teamId)
+
+        when(userRepository.findAll()).thenReturn(userFlux);
+
+        webTestClient.get().uri("/api/v1/users")
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk()
@@ -216,7 +216,6 @@ public class UserHandlerTest {
     @Test
     public void testGetUserById() {
 
-        String teamId = "org-id-123";
         String userId = "1";
 
         User user = User.builder()
@@ -231,7 +230,7 @@ public class UserHandlerTest {
 
         when(userRepository.findById(anyString())).thenReturn(userMono);
 
-        webTestClient.get().uri("/api/v1/{teamId}/users/{userId}", teamId, userId)
+        webTestClient.get().uri("/api/v1/users/{userId}", userId)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk()

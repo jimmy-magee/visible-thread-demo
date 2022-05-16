@@ -18,6 +18,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.time.LocalDateTime;
 
@@ -34,6 +35,21 @@ public class UserHandler {
     public UserHandler(final UserRepository userRepository, final TeamRepository teamRepository) {
         this.userRepository = userRepository;
         this.teamRepository = teamRepository;
+    }
+
+
+    /**
+     * @param request
+     * @return response
+     */
+    public Mono<ServerResponse> getAllUsers(ServerRequest request) {
+        Flux<UserRepresentation> userFlux = this.userRepository.findAll()
+                .switchIfEmpty(Flux.empty())
+                .flatMap(this::toUserRepresentation);
+        return ServerResponse.ok()
+                .contentType(APPLICATION_JSON)
+                .body(BodyInserters.fromPublisher(userFlux, UserRepresentation.class));
+
     }
 
 
@@ -70,31 +86,40 @@ public class UserHandler {
      */
     public Mono<ServerResponse> createUser(ServerRequest request) {
 
-        String teamId = request.pathVariable("teamId");
         Mono<NewUserForm> formMono = request.bodyToMono(NewUserForm.class);
 
-        Mono<User> savedMono = formMono
-                .flatMap(form -> {
-                    Mono<Team> teamMono = this.teamRepository.findById(teamId);
-                    return teamMono.switchIfEmpty(Mono.error(new TeamNotFoundException("Error creating user, the Team does not exist")))
-                            .map(org -> User.builder()
+        Mono<User> savedUserMono = formMono
+                .map(form -> User.builder()
                                     .firstname(form.getFirstName())
                                     .lastname(form.getLastName())
                                     .email(form.getEmail())
                                     .phone(form.getPhone())
                                     .isEmailVerified(false)
                                     .createdDate(LocalDateTime.now())
-                                    .build()).flatMap(userRepository::save);
+                                    .build())
+                            .flatMap(userRepository::save);
+
+        Mono<Team> updatedTeam = savedUserMono.zipWith(formMono)
+                .flatMap((Tuple2<User, NewUserForm> data) -> {
+                    String userId = data.getT1().getId();
+                    String teamId = data.getT2().getTeamId();
+
+                    return this.teamRepository.findById(teamId).flatMap(t -> {
+                        t.getUsers().add(userId);
+                        return this.teamRepository.save(t);
+                    });
+
                 });
+
+
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
-                .body(BodyInserters.fromPublisher(savedMono, User.class));
+                .body(BodyInserters.fromPublisher(savedUserMono, User.class));
     }
 
 
     public Mono<ServerResponse> updateUser(ServerRequest request) {
 
-        String teamId = request.pathVariable("teamId");
         String id = request.pathVariable("userId");
         Mono<UpdateUserForm> formMono = request.bodyToMono(UpdateUserForm.class);
         log.debug("Updating user {}", id);
