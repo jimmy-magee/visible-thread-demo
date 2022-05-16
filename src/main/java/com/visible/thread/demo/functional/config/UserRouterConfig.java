@@ -25,8 +25,7 @@ public class UserRouterConfig {
     @Bean
     public RouterFunction userRoute(UserHandler userHandler) {
         return RouterFunctions
-                .route(GET("/api/v1/{teamId}/users").and(accept(APPLICATION_JSON)), userHandler::getUsersByTeamId)
-                .andRoute(GET("/api/v1/{teamId}/users/{userId}").and(accept(APPLICATION_JSON)), userHandler::getUserById)
+                .route(GET("/api/v1/{teamId}/users/{userId}").and(accept(APPLICATION_JSON)), userHandler::getUserById)
                 .andRoute(GET("/api/v1/{teamId}/users/email/{email_address}").and(accept(APPLICATION_JSON)), userHandler::getUserByEmail)
                 .andRoute(POST("/api/v1/{teamId}/users").and(accept(APPLICATION_JSON)), userHandler::createUser)
                 .andRoute(POST("/api/v1/{teamId}/users/{userId}").and(accept(APPLICATION_JSON)), userHandler::updateUser)

@@ -27,8 +27,6 @@ public final class User implements Serializable {
 
     private String organisationId;
 
-    private String teamId;
-
     private String firstname;
 
     private String lastname;

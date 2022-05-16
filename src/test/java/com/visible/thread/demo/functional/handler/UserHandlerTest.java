@@ -65,7 +65,6 @@ public class UserHandlerTest {
 
         User user = User.builder()
                 .id(userId)
-                .teamId(teamId)
                 .firstname("Ned")
                 .lastname("Pantic")
                 .phone("083 4396070")
@@ -201,9 +200,7 @@ public class UserHandlerTest {
                 .build();
 
         Flux<User> userFlux = Flux.just(userOne, userTwo, userThree);
-
-        when(userRepository.findByTeamId(anyString())).thenReturn(userFlux);
-
+        
         webTestClient.get().uri("/api/v1/{teamId}/users", teamId)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()

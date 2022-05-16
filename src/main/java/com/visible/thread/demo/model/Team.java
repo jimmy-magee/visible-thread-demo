@@ -6,6 +6,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Builder
 @AllArgsConstructor
@@ -26,6 +28,9 @@ public final class Team implements Serializable {
     private String name;
 
     private String description;
+
+    @Builder.Default
+    private Set<String> users = new HashSet<>();
 
     private LocalDateTime createdDate;
 

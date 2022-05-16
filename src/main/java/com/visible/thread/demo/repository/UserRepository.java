@@ -13,8 +13,6 @@ public interface UserRepository extends ReactiveMongoRepository<User, String> {
 
     public Mono<User> findByEmail(final String email);
 
-    public Flux<User> findByTeamId(final String teamId);
-
     public Flux<User> findByOrganisationId(final String organisationId);
 
 }

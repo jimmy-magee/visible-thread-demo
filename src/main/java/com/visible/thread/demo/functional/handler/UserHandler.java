@@ -37,16 +37,6 @@ public class UserHandler {
     }
 
 
-    public Mono<ServerResponse> getUsersByTeamId(ServerRequest request) {
-
-        String teamId = request.pathVariable("teamId");
-        Flux<UserRepresentation> users = this.userRepository.findByTeamId(teamId)
-                .flatMap(this::toUserRepresentation);
-        return ServerResponse.ok()
-                .contentType(APPLICATION_JSON)
-                .body(BodyInserters.fromPublisher(users, UserRepresentation.class));
-    }
-
     /**
      * @param request
      * @return response
@@ -92,7 +82,6 @@ public class UserHandler {
                                     .lastname(form.getLastName())
                                     .email(form.getEmail())
                                     .phone(form.getPhone())
-                                    .teamId(teamId)
                                     .isEmailVerified(false)
                                     .createdDate(LocalDateTime.now())
                                     .build()).flatMap(userRepository::save);
@@ -149,7 +138,6 @@ public class UserHandler {
         return Mono.just(
                 UserRepresentation.builder()
                         .id(user.getId())
-                        .teamId(user.getTeamId())
                         .firstname(user.getFirstname())
                         .lastname(user.getLastname())
                         .email(user.getEmail())

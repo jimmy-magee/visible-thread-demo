@@ -1,8 +1,11 @@
 package com.visible.thread.demo.dto.representations;
 
+import com.visible.thread.demo.model.User;
 import lombok.*;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Team Representation
@@ -24,6 +27,8 @@ public class TeamRepresentation implements Serializable {
     private String name;
 
     private String description;
+
+    private List<User> users = new ArrayList<>();
 
 }
 

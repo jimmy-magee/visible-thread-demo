@@ -81,7 +81,6 @@ public class UserRepositoryTest {
                 .lastname("the builder")
                 .firstname("bob")
                 .organisationId("123")
-                .teamId("456")
                 .phone("8080028")
                 .createdDate(LocalDateTime.now().minusDays(1))
                 .modificationDate(LocalDateTime.now())
