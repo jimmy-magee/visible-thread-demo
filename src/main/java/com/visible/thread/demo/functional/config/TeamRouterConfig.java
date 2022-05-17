@@ -32,8 +32,8 @@ public class TeamRouterConfig {
                 .andRoute(GET("/api/v1/{organisationId}/team/{name}").and(accept(APPLICATION_JSON)), teamHandler::getTeamByName)
                 .andRoute(POST("/api/v1/{organisationId}/teams").and(accept(APPLICATION_JSON)), teamHandler::createTeam)
                 .andRoute(POST("/api/v1/{organisationId}/teams/{teamId}").and(accept(APPLICATION_JSON)), teamHandler::updateTeam)
-                .andRoute(POST("/api/v1/{organisationId}/teams/{teamId}/user/{userId}").and(accept(APPLICATION_JSON)), teamHandler::addUserToTeam)
-                .andRoute(DELETE("/api/v1/{organisationId}/teams/{teamId}/user/{userId}").and(accept(APPLICATION_JSON)), teamHandler::removeUserFromTeam)
+                .andRoute(POST("/api/v1/{organisationId}/teams/{teamId}/users/add/{userId}").and(accept(APPLICATION_JSON)), teamHandler::addUserToTeam)
+                .andRoute(DELETE("/api/v1/{organisationId}/teams/{teamId}/users/remove/{userId}").and(accept(APPLICATION_JSON)), teamHandler::removeUserFromTeam)
                 .andRoute(DELETE("/api/v1/{organisationId}/teams/{teamId}").and(accept(APPLICATION_JSON)), teamHandler::deleteTeam);
     }
 

@@ -184,7 +184,7 @@ public class TeamHandler {
         Mono<User> userMono = userRepository.findById(userId)
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User with id " + userId + " not found")));
 
-        Mono<Team> updatedTeamMono = teamMono.zip(teamMono, userMono)
+        Mono<TeamRepresentation> updatedTeamMono = teamMono.zip(teamMono, userMono)
                 .flatMap((Tuple2<Team, User> data) -> {
                     Team team = data.getT1();
                     User user = data.getT2();
@@ -193,11 +193,12 @@ public class TeamHandler {
                         team.getUsers().add(user.getId());
                     }
 
-                    return this.teamRepository.save(team);
+                    return this.teamRepository.save(team)
+                            .flatMap(this::toTeamRepresentation);
                 });
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
-                .body(BodyInserters.fromPublisher(updatedTeamMono, Team.class));
+                .body(BodyInserters.fromPublisher(updatedTeamMono, TeamRepresentation.class));
     }
 
     public Mono<ServerResponse> removeUserFromTeam(ServerRequest request) {
@@ -213,20 +214,22 @@ public class TeamHandler {
         Mono<User> userMono = userRepository.findById(userId)
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User with id " + userId + " not found")));
 
-        Mono<Team> updatedTeamMono = Mono.zip(teamMono, userMono)
+        Mono<TeamRepresentation> updatedTeamMono = Mono.zip(teamMono, userMono)
                 .flatMap((Tuple2<Team, User> data) -> {
                     Team team = data.getT1();
                     User user = data.getT2();
 
                     if (team.getUsers().contains(user.getId())) {
                         team.getUsers().remove(user.getId());
+                        log.debug("Removed user with id {} from {}", userId, team.getName());
                     }
 
-                    return this.teamRepository.save(team);
+                    return this.teamRepository.save(team)
+                            .flatMap(this::toTeamRepresentation);
                 });
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
-                .body(BodyInserters.fromPublisher(updatedTeamMono, Team.class));
+                .body(BodyInserters.fromPublisher(updatedTeamMono, TeamRepresentation.class));
     }
 
 

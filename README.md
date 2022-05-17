@@ -54,6 +54,23 @@ curl -v  http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}
 ```
  curl -v -d '{"email":"alice@test.com", "firstName":"Alice", "lastName": "Pope" }' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}/users
  export USER_ID=62838b3ace37584e0d47b34f
+ 
+ curl -v -d '{"email":"bob@test.com", "firstName":"Bob", "lastName": "Pope" }' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}/users
+ export USER_ID=6283a353ea82dc21a411162e
+```
+
+### Add user to a team
+
+```
+curl -v  -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}/users/add/${USER_ID}
+
+```
+
+### Remove a user from a team
+
+```
+curl -v  -H "Content-Type: application/json" -X DELETE http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}/users/remove/${USER_ID}
+
 ```
 
 ### Get all users for an organisation
@@ -76,7 +93,7 @@ curl -v -X GET http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}/
 
 ### Update a user
 
-```curl -vv  http://localhost:8080/api/v1/users```
+```curl -v -d '{"email":"alice@test.com", "firstName":"Alice", "lastName": "Hope" }' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}/users/${USER_ID}```
 
 ### Delete a user
 
@@ -84,16 +101,20 @@ curl -v -X GET http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}/
 curl -v -X DELETE  http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}/users/${USER_ID}
 ```
 
+### Upload a document 
+
 ```
-curl -vvv -F "projectIdForm=5d089cfacec41e4acadda4f5" -F "profile=profile1" -F "doc=@/Users/jimmy/Documents/visible_thread/demo/src/main/resources/alice_in_wonderland.txt" -X POST http://localhost:8080/api/v1/vtdocs/team123/user123
+curl -vvv -F "projectIdForm=5d089cfacec41e4acadda4f5" -F "profile=profile1" -F "doc=@/Users/jimmy/Documents/visible_thread/demo/src/main/resources/alice_in_wonderland.txt" -X POST http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID}/users/${USER_ID}
+export DOCUMENT_ID=
 ```
 
 ```
 curl -vvv -F "projectIdForm=5d089cfacec41e4acadda4f5" -F "category=site image" -F "fileParts=@/Users/jimmy/Documents/visible_thread/demo/src/main/resources/alice_in_wonderland.txt" -F "fileParts=@/Users/jimmy/Documents/visible_thread/demo/src/main/resources/alice_in_wonderland.txt"  http://localhost:8080/api/v1/vtdocs/team123/user123
 ```
 
+### Get a document by Id
 ```
-curl -vvv http://localhost:8080/api/v1/team123/user123/vtdocs/627e4fd9397bd54a1fa10234
+curl -vvv http://localhost:8080/api/v1/team123/user123/vtdocs/${DOCUMENT_ID}
 ```
 
 ### Example db commands
