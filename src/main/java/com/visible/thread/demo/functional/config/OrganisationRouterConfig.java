@@ -26,7 +26,7 @@ public class OrganisationRouterConfig {
         return RouterFunctions
                 .route(GET("/api/v1/organisations").and(accept(APPLICATION_JSON)), organisationHandler::getAllOrganisations)
                 .andRoute(GET("/api/v1/organisations/{organisationId}").and(accept(APPLICATION_JSON)), organisationHandler::getOrganisationById)
-                .andRoute(POST("/api/v1/{organisationId}/organisations").and(accept(APPLICATION_JSON)), organisationHandler::createOrganisation)
+                .andRoute(POST("/api/v1/organisations").and(accept(APPLICATION_JSON)), organisationHandler::createOrganisation)
                 .andRoute(DELETE("/api/v1/organisations/{organisationId}").and(accept(APPLICATION_JSON)), organisationHandler::deleteOrganisation);
     }
 

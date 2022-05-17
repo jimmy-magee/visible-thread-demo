@@ -45,8 +45,8 @@ public class UserHandlerTest {
 
     @Test
     public void testCreateUser() {
-
-        String teamId = "org-id-123";
+        String organisationId = "org-id-123";
+        String teamId = "team-id-123";
         String userId = "user-id-123";
 
         UserRepresentation userRepresentation = UserRepresentation.builder().id(userId).lastname("Pantic").build();
@@ -80,8 +80,10 @@ public class UserHandlerTest {
 
         when(userRepository.save(any())).thenReturn(userMono);
 
+        when(teamRepository.save(any())).thenReturn(teamMono);
 
-        webTestClient.post().uri("/api/v1/users", teamId)
+
+        webTestClient.post().uri("/api/v1/{organisationId}/teams/{teamId}/users", organisationId, teamId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(Mono.just(requestBody), NewUserForm.class)
@@ -100,6 +102,8 @@ public class UserHandlerTest {
     @Test
     public void testUpdateUser() {
 
+        String organisationId = "org-id-123";
+        String teamId = "team-id-123";
         String userId = "user-id-123";
 
         UserRepresentation userRepresentation = UserRepresentation.builder().id("1").lastname("Pantic").build();
@@ -125,7 +129,7 @@ public class UserHandlerTest {
         when(userRepository.save(any())).thenReturn(userMono);
 
 
-        webTestClient.post().uri("/api/v1/users/{userId}", userId)
+        webTestClient.post().uri("/api/v1/{organisationId}/teams/{teamId}/users/{userId}", organisationId, teamId,  userId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(Mono.just(requestBody), UpdateUserForm.class)
@@ -145,8 +149,9 @@ public class UserHandlerTest {
     @Test
     public void testDeleteUser() {
 
-        String userId = "user-123";
-
+        String organisationId = "org-id-123";
+        String teamId = "team-id-123";
+        String userId = "user-id-123";
 
         User user = User.builder()
                 .id("1")
@@ -161,7 +166,7 @@ public class UserHandlerTest {
         when(userRepository.findById(anyString())).thenReturn(userMono);
         when(userRepository.delete(any())).thenReturn(Mono.empty());
 
-        webTestClient.post().uri("/api/v1/users/{userId}", userId)
+        webTestClient.post().uri("/api/v1/{organisationId}/teams/{teamId}/users/{userId}", organisationId, teamId, userId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
@@ -171,7 +176,9 @@ public class UserHandlerTest {
     }
 
     @Test
-    public void testGetAllUsers() {
+    public void testGetAllUsersForAnOrganisation() {
+
+        String organisationId = "org-id-123";
 
         User userOne = User.builder()
                 .id("1")
@@ -199,9 +206,9 @@ public class UserHandlerTest {
 
         Flux<User> userFlux = Flux.just(userOne, userTwo, userThree);
 
-        when(userRepository.findAll()).thenReturn(userFlux);
+        when(userRepository.findByOrganisationId(anyString())).thenReturn(userFlux);
 
-        webTestClient.get().uri("/api/v1/users")
+        webTestClient.get().uri("/api/v1/{organisationId}/users", organisationId)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk()
@@ -216,7 +223,9 @@ public class UserHandlerTest {
     @Test
     public void testGetUserById() {
 
-        String userId = "1";
+        String organisationId = "org-id-123";
+        String teamId = "team-id-123";
+        String userId = "user-id-123";
 
         User user = User.builder()
                 .id("1")
@@ -230,7 +239,7 @@ public class UserHandlerTest {
 
         when(userRepository.findById(anyString())).thenReturn(userMono);
 
-        webTestClient.get().uri("/api/v1/users/{userId}", userId)
+        webTestClient.get().uri("/api/v1/{organisationId}/teams/{teamId}/users/{userId}", organisationId, teamId, userId)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk()

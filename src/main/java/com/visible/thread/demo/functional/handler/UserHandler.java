@@ -5,7 +5,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 import com.visible.thread.demo.dto.forms.NewUserForm;
 import com.visible.thread.demo.dto.forms.UpdateUserForm;
 import com.visible.thread.demo.dto.representations.UserRepresentation;
-import com.visible.thread.demo.exception.TeamNotFoundException;
 import com.visible.thread.demo.exception.UserNotFoundException;
 import com.visible.thread.demo.model.Team;
 import com.visible.thread.demo.model.User;
@@ -21,6 +20,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * User Api Service
@@ -42,8 +42,13 @@ public class UserHandler {
      * @param request
      * @return response
      */
-    public Mono<ServerResponse> getAllUsers(ServerRequest request) {
-        Flux<UserRepresentation> userFlux = this.userRepository.findAll()
+    public Mono<ServerResponse> getAllUsersByOrganisationId(ServerRequest request) {
+
+        String organisationId = request.pathVariable("organisationId");
+
+        log.debug("Looking up users by organisation id {}", organisationId);
+
+        Flux<UserRepresentation> userFlux = this.userRepository.findByOrganisationId(organisationId)
                 .switchIfEmpty(Flux.empty())
                 .flatMap(this::toUserRepresentation);
         return ServerResponse.ok()
@@ -58,9 +63,13 @@ public class UserHandler {
      * @return response
      */
     public Mono<ServerResponse> getUserById(ServerRequest request) {
+
         String id = request.pathVariable("userId");
+        log.debug("Looking up users by user id {}", id);
+
         Mono<UserRepresentation> userMono = this.userRepository.findById(id)
                 .flatMap(this::toUserRepresentation);
+
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
                 .body(BodyInserters.fromPublisher(userMono, UserRepresentation.class));
@@ -72,11 +81,16 @@ public class UserHandler {
      * @return response
      */
     public Mono<ServerResponse> getUserByEmail(ServerRequest request) {
-        String email = request.pathVariable("email");
-        Mono<User> userMono = this.userRepository.findByEmail(email);
+
+        String email = request.pathVariable("email_address");
+        log.debug("Looking up user by email {}", email);
+
+        Mono<UserRepresentation> userMono = this.userRepository.findByEmail(email)
+                .flatMap(this::toUserRepresentation);
+
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
-                .body(BodyInserters.fromPublisher(userMono, User.class));
+                .body(BodyInserters.fromPublisher(userMono, UserRepresentation.class));
 
     }
 
@@ -86,35 +100,43 @@ public class UserHandler {
      */
     public Mono<ServerResponse> createUser(ServerRequest request) {
 
+        String organisationId = request.pathVariable("organisationId");
+        String teamId = request.pathVariable("teamId");
+
+        log.debug("Creating new user for organisation {} and assigning to team {}", organisationId, teamId);
+
         Mono<NewUserForm> formMono = request.bodyToMono(NewUserForm.class);
+        Mono<Team> teamMono = this.teamRepository.findById(teamId);
 
-        Mono<User> savedUserMono = formMono
+        Mono<UserRepresentation> savedUserMono = formMono
                 .map(form -> User.builder()
-                                    .firstname(form.getFirstName())
-                                    .lastname(form.getLastName())
-                                    .email(form.getEmail())
-                                    .phone(form.getPhone())
-                                    .isEmailVerified(false)
-                                    .createdDate(LocalDateTime.now())
-                                    .build())
-                            .flatMap(userRepository::save);
+                        .firstname(form.getFirstName())
+                        .lastname(form.getLastName())
+                        .organisationId(organisationId)
+                        .email(form.getEmail())
+                        .phone(form.getPhone())
+                        .isEmailVerified(false)
+                        .createdDate(LocalDateTime.now())
+                        .build())
+                .flatMap(userRepository::save)
+                .flatMap(this::toUserRepresentation);
 
-        Mono<Team> updatedTeam = savedUserMono.zipWith(formMono)
-                .flatMap((Tuple2<User, NewUserForm> data) -> {
-                    String userId = data.getT1().getId();
-                    String teamId = data.getT2().getTeamId();
+        return Mono.zip(teamMono, savedUserMono)
+                .flatMap((Tuple2<Team, UserRepresentation> data) -> {
 
-                    return this.teamRepository.findById(teamId).flatMap(t -> {
-                        t.getUsers().add(userId);
-                        return this.teamRepository.save(t);
-                    });
+                    Team team = data.getT1();
+                    UserRepresentation user = data.getT2();
 
+                    if(!team.getUsers().contains(user.getId())) {
+                            team.getUsers().add(user.getId());
+                    }
+
+                    return this.teamRepository.save(team)
+                            .flatMap(updatedTeam -> ServerResponse.ok()
+                            .contentType(APPLICATION_JSON)
+                            .body(BodyInserters.fromValue(user)));
                 });
 
-
-        return ServerResponse.ok()
-                .contentType(APPLICATION_JSON)
-                .body(BodyInserters.fromPublisher(savedUserMono, User.class));
     }
 
 
@@ -125,9 +147,9 @@ public class UserHandler {
         log.debug("Updating user {}", id);
         Mono<User> savedMono = formMono
                 .flatMap(form -> {
-                    return  userRepository.findById(id)
-                            .switchIfEmpty(Mono.error(new UserNotFoundException("User with id "+id+" does not exist")))
-                            .flatMap( user -> {
+                    return userRepository.findById(id)
+                            .switchIfEmpty(Mono.error(new UserNotFoundException("User with id " + id + " does not exist")))
+                            .flatMap(user -> {
                                 user.setFirstname(form.getFirstName());
                                 user.setLastname(form.getLastName());
                                 user.setEmail(form.getEmail());
@@ -151,10 +173,20 @@ public class UserHandler {
 
         String userId = request.pathVariable("userId");
 
-        return this.userRepository.findById(userId)
-                .flatMap(savedUser -> ServerResponse.ok().body(BodyInserters.fromPublisher(this.userRepository.delete(savedUser), Void.class)))
-                .switchIfEmpty(ServerResponse.badRequest()
-                        .body(BodyInserters.fromValue(new UserNotFoundException("User not found"))));
+        Flux<Team> userTeamsFlux = this.teamRepository.findAll().filter(team -> team.getUsers().contains(userId));
+
+        Mono<List<Team>> updatedTeamsMono = userTeamsFlux.flatMap(team -> {
+            team.getUsers().remove(userId);
+            return this.teamRepository.save(team);
+        }).collectList();
+
+        return updatedTeamsMono.flatMap( list -> {
+            return this.userRepository.findById(userId)
+                    .flatMap(savedUser -> ServerResponse.ok()
+                            .body(BodyInserters.fromPublisher(this.userRepository.delete(savedUser), Void.class)))
+                    .switchIfEmpty(ServerResponse.badRequest()
+                            .body(BodyInserters.fromValue(new UserNotFoundException("User not found"))));
+        });
     }
 
 
@@ -163,6 +195,7 @@ public class UserHandler {
         return Mono.just(
                 UserRepresentation.builder()
                         .id(user.getId())
+                        .organisationId(user.getOrganisationId())
                         .firstname(user.getFirstname())
                         .lastname(user.getLastname())
                         .email(user.getEmail())
@@ -171,9 +204,6 @@ public class UserHandler {
         );
 
     }
-
-
-
 
 
 }

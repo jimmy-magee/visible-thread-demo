@@ -20,7 +20,7 @@ public class DatasourceConfig extends AbstractReactiveMongoConfiguration {
 
     @Override
     protected String getDatabaseName() {
-        return "blog";
+        return "visible_thread_docs";
     }
 
 

@@ -21,8 +21,6 @@ public class UserRepresentation implements Serializable {
 
     private String organisationId;
 
-    private String teamId;
-
     private String firstname;
 
     private String lastname;
@@ -30,7 +28,5 @@ public class UserRepresentation implements Serializable {
     private Boolean isEmailVerified;
 
     private String email;
-
-    private String phone;
 
 }

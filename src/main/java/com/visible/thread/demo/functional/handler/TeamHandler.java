@@ -89,6 +89,16 @@ public class TeamHandler {
 
     }
 
+    public Mono<ServerResponse> getTeamUsers(ServerRequest request) {
+        String id = request.pathVariable("teamId");
+        Mono<TeamRepresentation> teamMono = this.teamRepository.findById(id)
+                .flatMap(this::toTeamRepresentation);
+        return ServerResponse.ok()
+                .contentType(APPLICATION_JSON)
+                .body(BodyInserters.fromPublisher(teamMono, TeamRepresentation.class));
+
+    }
+
     /**
      * @param request
      * @return response
@@ -111,19 +121,25 @@ public class TeamHandler {
     public Mono<ServerResponse> createTeam(ServerRequest request) {
 
         String organisationId = request.pathVariable("organisationId");
+
         Mono<NewTeamForm> formMono = request.bodyToMono(NewTeamForm.class);
+
+        log.debug("Creating new team for organisation {}", organisationId);
 
         Mono<TeamRepresentation> savedMono = formMono
                 .flatMap(form -> {
-                    Mono<Organisation> teamMono = this.organisationRepository.findById(organisationId);
-                    return teamMono.switchIfEmpty(Mono.error(new OrganisationNotFoundException("Error creating team, the Team does not exist")))
+                    Mono<Organisation> organisationMono = this.organisationRepository
+                            .findById(organisationId);
+                    return organisationMono
+                            .switchIfEmpty(Mono.error(new OrganisationNotFoundException("Error creating team, the Organisation with id "+organisationId+" does not exist")))
                             .map(org -> Team.builder()
                                     .organisationId(organisationId)
                                     .name(form.getName())
                                     .description(form.getDescription())
                                     .createdDate(LocalDateTime.now())
-                                    .build()).flatMap(teamRepository::save);
-                }).flatMap(this::toTeamRepresentation);
+                                    .build());
+                }).flatMap(teamRepository::save)
+                .flatMap(this::toTeamRepresentation);
         ;
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
@@ -197,7 +213,7 @@ public class TeamHandler {
         Mono<User> userMono = userRepository.findById(userId)
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User with id " + userId + " not found")));
 
-        Mono<Team> updatedTeamMono = teamMono.zip(teamMono, userMono)
+        Mono<Team> updatedTeamMono = Mono.zip(teamMono, userMono)
                 .flatMap((Tuple2<Team, User> data) -> {
                     Team team = data.getT1();
                     User user = data.getT2();
@@ -239,6 +255,7 @@ public class TeamHandler {
         return userListMono.map(users -> {
             return TeamRepresentation.builder()
                     .id(team.getId())
+                    .organisationId(team.getOrganisationId())
                     .name(team.getName())
                     .description(team.getDescription())
                     .users(users)
@@ -246,6 +263,7 @@ public class TeamHandler {
         }).switchIfEmpty(
                 Mono.just(TeamRepresentation.builder()
                         .id(team.getId())
+                        .organisationId(team.getOrganisationId())
                         .name(team.getName())
                         .description(team.getDescription())
                         .build())
