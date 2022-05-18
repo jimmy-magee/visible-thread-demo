@@ -35,8 +35,8 @@ export ORGANISATION_ID=6284993b76172b0235aac138
 ### Create a team
 
 ```
-`curl -v -d '{"name":"Sales Team", "description":"Super Sales Team"}' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/teams
-`export TEAM_ID=6284999d76172b0235aac13a
+curl -v -d '{"name":"Sales Team", "description":"Super Sales Team"}' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/teams
+export TEAM_ID=62852b807879ba7df8ee57f9
 ```
 
 ###  Get all teams by organisation id
@@ -53,7 +53,7 @@ curl -v  http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}
 
 ```
  curl -v -d '{"email":"alice@test.com", "firstName":"Alice", "lastName": "Pope" }' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}/users
- export USER_ID=62849a0a76172b0235aac13b
+ export USER_ID=62852ba07879ba7df8ee57fa
  
  curl -v -d '{"email":"bob@test.com", "firstName":"Bob", "lastName": "Pope" }' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}/users
  export USER_ID=6283a353ea82dc21a411162e
@@ -91,9 +91,17 @@ export USER_EMAIL=alice%40test.com
 curl -v -X GET http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}/users/email/${USER_EMAIL}
 ```
 
+### Get users created in between the specified date range.
+
+```
+ curl -v -d '{"startDate":"2022-02-01", "endDate":"2022-06-01" }' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/users/query_by_date_range
+ 
+ 
+```
+
 ### Update a user
 
-```curl -v -d '{"email":"alice@test.com", "firstName":"Alice", "lastName": "Hope" }' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}/users/${USER_ID}```
+```curl -v -d '{"email":"alice@test.com", "firstName":"Alice", "lastName": "Hope" }' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/users/${USER_ID}```
 
 ### Delete a user
 

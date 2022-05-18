@@ -20,7 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.List;
 
 /**
@@ -167,18 +167,26 @@ public class UserHandler {
 
     public Mono<ServerResponse> findUsersCreatedInDateRange(ServerRequest request) {
 
+        String organisationId = request.pathVariable("organisationId");
+
         Mono<UserCreationQueryForm> formMono = request.bodyToMono(UserCreationQueryForm.class);
 
-        Flux<User> userListMono = formMono
+        Flux<UserRepresentation> userFlux = formMono
                 .flatMap(form -> {
-                    return userRepository.findAll()
-                            .filter(u -> u.getCreatedDate().isAfter(form.getStartDate())
-                                    && u.getCreatedDate().isBefore(form.getEndDate()))
+                    log.debug("Looking up users created between {} and {}", form.getStartDate(), form.getEndDate());
+
+                    LocalDate startDate = LocalDate.parse(form.getStartDate());
+                    LocalDate endDate = LocalDate.parse(form.getEndDate());
+
+                    return userRepository.findByOrganisationId(organisationId)
+                            .filter(u -> u.getCreatedDate().isAfter(startDate.atStartOfDay())
+                                    && u.getCreatedDate().isBefore(endDate.atTime(LocalTime.MAX)))
+                            .flatMap(this::toUserRepresentation)
                             .collectList();
                 }).flatMapMany(Flux::fromIterable);
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
-                .body(BodyInserters.fromPublisher(userListMono, User.class));
+                .body(BodyInserters.fromPublisher(userFlux, UserRepresentation.class));
     }
 
 
