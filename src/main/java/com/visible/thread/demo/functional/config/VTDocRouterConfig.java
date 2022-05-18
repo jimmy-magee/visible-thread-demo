@@ -29,7 +29,6 @@ public class VTDocRouterConfig {
                 .andRoute(GET("/api/v1/vtdocs/{organisationId}/teams/{teamId}/users/{userId}").and(accept(APPLICATION_JSON)), vTDocHandler::getVTDocByUserId)
                 .andRoute(GET("/api/v1/vtdocs/{organisationId}/teams/{teamId}/users/{userId}/{id}").and(accept(APPLICATION_JSON)), vTDocHandler::downloadVTDocById)
                 .andRoute(POST("/api/v1/vtdocs/{organisationId}/teams/{teamId}/users/{userId}").and(accept(MULTIPART_FORM_DATA)), vTDocHandler::uploadVTDocs)
-                .andRoute(POST("/api/v1/vtdocs/{organisationId}/teams/{teamId}/users/{userId}/{id}").and(accept(APPLICATION_JSON)), vTDocHandler::updateVTDoc)
                 .andRoute(DELETE("/api/v1/vtdocs/{organisationId}/teams/{teamId}/users/{userId}/{id}").and(accept(APPLICATION_JSON)), vTDocHandler::deleteVTDoc);
     }
 

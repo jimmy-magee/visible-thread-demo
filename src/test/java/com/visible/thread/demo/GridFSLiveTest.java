@@ -1,6 +1,5 @@
 package com.visible.thread.demo;
 
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -20,9 +19,6 @@ import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate;
 import org.springframework.test.context.event.annotation.AfterTestMethod;
 
-
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -158,141 +154,6 @@ public class GridFSLiveTest {
             );
             sortedEntries.addAll(map.entrySet());
             return sortedEntries;
-    }
-
-
-
-
-
-    @Test
-    public void givenFileWithMetadataExist_whenDeletingFileById_thenFileWithMetadataIsDeleted() {
-        DBObject metaData = new BasicDBObject();
-        metaData.put("user", "alex");
-        Path path = FileSystems.getDefault().getPath("src/main/resources/alice_in_wonderland.txt");
-
-        Flux<String> linesIncludingBlanks = fromPath(path);
-/*
-        FilePart part = new FilePart() {
-            @Override
-            public String filename() {
-                return null;
-            }
-
-            @Override
-            public Mono<Void> transferTo(Path dest) {
-                return null;
-            }
-
-            @Override
-            public String name() {
-                return null;
-            }
-
-            @Override
-            public HttpHeaders headers() {
-                return null;
-            }
-
-            @Override
-            public Flux<DataBuffer> content() {
-                return null;
-            }
-        }
-
-        Mono<FilePart> fileParts = Mono.just(filePart);
-
-        gridFsTemplate.store(linesIncludingBlanks., file.getName(), file.getContentType(), metaData).subscribe();
-        // gridFsTemplate.store(dataBufferFlux, "test.png", "image/png", metaData).map((recordId) -> Map.of("id", recordId.toHexString()));
-        // id = gridFsTemplate.store(inputStream, "test.png", "image/png", metaData);
-        //gridFsTemplate.delete(new Query(Criteria.where("_id").is(id)));
-        //assertThat(gridFsTemplate.findOne(new Query(Criteria.where("_id").is(id)))).isNotNull();
-
-        /*
-        Flux<String> lines = linesIncludingBlanks.filter(it -> StringUtils.isNotBlank(it));
-
-        Flux<String> wordsFlux = lines.flatMapIterable(this::extractWords);
-
-        Mono<SortedSet> wordFrequencyMono = wordsFlux.collect(TreeMap<String, Integer>::new, (a, b) -> {
-            if (!a.containsKey(b)) {
-                a.put(b, 1);
-            } else {
-                a.replace(b, a.get(b) + 1);
-            }
-        }).map(this::entriesSortedByValuesReverseOrder);//.map(sortedSet -> sortedSet.tailSet());
-
-        wordFrequencyMono.subscribe(System.out::println);
-
-       // Map<String, Integer> wordMap = new HashMap();
-       // wordsFlux.collectMap(item -> {return item;}, item -> {
-
-        //  return 0;
-       // } );
-        //wordsFlux.collectMap(v -> "(" + v +")", v -> v + 10, TreeMap::new)
-        //        .subscribe(System.out::println);
-
-
-        Flux<Pair<String, Long>> wordGroupsFlux = wordsFlux.groupBy(it -> it)
-                .flatMap(group -> group.count().map(count -> Pair.of(group.key(), count)));
-        wordGroupsFlux.subscribe(System.out::println);
-
-        //Mono<Long> groupCount = wordGroupsFlux.count();
-        //groupCount.subscribe( gc -> System.out.println("groupCount=" + gc));
-/*
-        Flux<List<String>> list = wordGroupsFlux.flatMap(idFlux -> idFlux.collectList().map(listOfWords -> {
-            System.out.println("hello "+ listOfWords);
-                            return listOfWords;
-                        }
-                )
-        );
-        System.out.println("List is ");
-           list.subscribe(System.out::println);
-*/
-
-        //wordsFlux.subscribe(System.out::println);
-/*
-        Mono<Long> wordCount = wordsFlux.count();
-
-        wordCount.subscribe(System.out::println);
-
-
-        Mono<Long> numberOfLines = lines.count();
-
-        Mono<Map<String, Integer>> wordFrequencyMapFlux = lines.collectMap(
-        				item -> item.split(" ")[0] ,
-        				item -> 0
-               );
-
-       // wordFrequencyMapFlux.subscribe(System.out::println);
-
-        Mono<Integer> totalWordCountMono1  = lines.filter(s -> s.contains("Alice"))
-                .map(StringTokenizer::new)
-
-                .map(StringTokenizer::countTokens)
-
-                .reduce(0, (x1, x2) -> x1 + x2);
-
-        Mono<Integer> totalWordCountMono  = lines.map(line -> {
-            return new StringTokenizer(line).countTokens();
-        }).reduce(0, (x1, x2) -> x1 + x2);
-
-        totalWordCountMono1.subscribe(System.out::println);
-
-        Mono<Long> numberOfLinesIncBlanks = linesIncludingBlanks.count();
-        numberOfLinesIncBlanks.subscribe(System.out::println);
-        numberOfLines.subscribe(System.out::println);
-        */
-
-
-        /*
-
-        // gridFsTemplate.store(file.get, file.getName(), file.getContentType(), metaData).subscribe();
-        // gridFsTemplate.store(dataBufferFlux, "test.png", "image/png", metaData).map((recordId) -> Map.of("id", recordId.toHexString()));
-        // id = gridFsTemplate.store(inputStream, "test.png", "image/png", metaData);
-        gridFsTemplate.delete(new Query(Criteria.where("_id").is(id)));
-        assertThat(gridFsTemplate.findOne(new Query(Criteria.where("_id").is(id)))).isNotNull();
-
-        */
-
     }
 
     public static <R> List<String> extractWords(String s) {

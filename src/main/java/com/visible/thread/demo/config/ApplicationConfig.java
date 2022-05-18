@@ -2,7 +2,6 @@ package com.visible.thread.demo.config;
 
 import com.visible.thread.demo.repository.TeamRepository;
 import com.visible.thread.demo.repository.UserRepository;
-import com.visible.thread.demo.repository.VTDocRepository;
 import com.visible.thread.demo.service.IVTDocService;
 import com.visible.thread.demo.service.VTDocService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +14,8 @@ public class ApplicationConfig {
 
     @Bean
     @Autowired
-    public IVTDocService vtDocService(final ReactiveGridFsTemplate reactiveGridFsTemplate, final TeamRepository teamRepository, final UserRepository userRepository, final VTDocRepository vtDocRepository) {
-        return new VTDocService(reactiveGridFsTemplate, teamRepository, userRepository, vtDocRepository);
+    public IVTDocService vtDocService(final ReactiveGridFsTemplate reactiveGridFsTemplate, final TeamRepository teamRepository, final UserRepository userRepository) {
+        return new VTDocService(reactiveGridFsTemplate, teamRepository, userRepository);
     }
 
 

@@ -2,12 +2,9 @@ package com.visible.thread.demo.service;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
-import com.visible.thread.demo.dto.forms.UpdateVTDocForm;
 import com.visible.thread.demo.exception.VTDocNotFoundException;
-import com.visible.thread.demo.model.VTDoc;
 import com.visible.thread.demo.repository.TeamRepository;
 import com.visible.thread.demo.repository.UserRepository;
-import com.visible.thread.demo.repository.VTDocRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -32,14 +29,12 @@ public class VTDocService implements IVTDocService {
 
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
-    private final VTDocRepository vTDocRepository;
     private final ReactiveGridFsTemplate reactiveGridFsTemplate;
 
-    public VTDocService(final ReactiveGridFsTemplate reactiveGridFsTemplate, final TeamRepository teamRepository, final UserRepository userRepository, final VTDocRepository vtDocRepository) {
+    public VTDocService(final ReactiveGridFsTemplate reactiveGridFsTemplate, final TeamRepository teamRepository, final UserRepository userRepository) {
         this.reactiveGridFsTemplate = reactiveGridFsTemplate;
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
-        this.vTDocRepository = vtDocRepository;
     }
 
     public Mono<ReactiveGridFsResource> findById(final String docId) {
@@ -114,15 +109,6 @@ public class VTDocService implements IVTDocService {
         });
     }
 
-    public Mono<VTDoc> updateVTDoc(final String id, final UpdateVTDocForm form) {
-        return vTDocRepository.findById(id)
-                .switchIfEmpty(Mono.error(new VTDocNotFoundException("VTDoc with id " + id + " does not exist")))
-                .flatMap(vTDoc -> {
-                    vTDoc.setTeamId(form.getTeamId());
-                    vTDoc.setModificationDate(LocalDateTime.now());
-                    return this.vTDocRepository.save(vTDoc);
-                });
-    }
 
     public Mono<Void> deleteVTDoc(final String docId) {
         return this.reactiveGridFsTemplate.findOne(query(where("_id").is(docId)))
