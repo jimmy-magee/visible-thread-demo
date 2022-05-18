@@ -4,6 +4,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 import com.visible.thread.demo.dto.forms.NewUserForm;
 import com.visible.thread.demo.dto.forms.UpdateUserForm;
+import com.visible.thread.demo.dto.forms.UserCreationQueryForm;
 import com.visible.thread.demo.dto.representations.UserRepresentation;
 import com.visible.thread.demo.exception.UserNotFoundException;
 import com.visible.thread.demo.model.Team;
@@ -162,6 +163,22 @@ public class UserHandler {
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
                 .body(BodyInserters.fromPublisher(savedMono, User.class));
+    }
+
+    public Mono<ServerResponse> findUsersCreatedInDateRange(ServerRequest request) {
+
+        Mono<UserCreationQueryForm> formMono = request.bodyToMono(UserCreationQueryForm.class);
+
+        Flux<User> userListMono = formMono
+                .flatMap(form -> {
+                    return userRepository.findAll()
+                            .filter(u -> u.getCreatedDate().isAfter(form.getStartDate())
+                                    && u.getCreatedDate().isBefore(form.getEndDate()))
+                            .collectList();
+                }).flatMapMany(Flux::fromIterable);
+        return ServerResponse.ok()
+                .contentType(APPLICATION_JSON)
+                .body(BodyInserters.fromPublisher(userListMono, User.class));
     }
 
 

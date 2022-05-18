@@ -28,6 +28,7 @@ public class UserRouterConfig {
                 .route(GET("/api/v1/{organisationId}/users").and(accept(APPLICATION_JSON)), userHandler::getAllUsersByOrganisationId)
                 .andRoute(GET("/api/v1/{organisationId}/teams/{teamId}/users/{userId}").and(accept(APPLICATION_JSON)), userHandler::getUserById)
                 .andRoute(GET("/api/v1/{organisationId}/teams/{teamId}/users/email/{email_address}").and(accept(APPLICATION_JSON)), userHandler::getUserByEmail)
+                .andRoute(POST("/api/v1/{organisationId}/teams/{teamId}/users/query_by_date_range").and(accept(APPLICATION_JSON)), userHandler::findUsersCreatedInDateRange)
                 .andRoute(POST("/api/v1/{organisationId}/teams/{teamId}/users").and(accept(APPLICATION_JSON)), userHandler::createUser)
                 .andRoute(POST("/api/v1/{organisationId}/teams/{teamId}/users/{userId}").and(accept(APPLICATION_JSON)), userHandler::updateUser)
                 .andRoute(DELETE("/api/v1/{organisationId}/teams/{teamId}/users/{userId}").and(accept(APPLICATION_JSON)), userHandler::deleteUser);
