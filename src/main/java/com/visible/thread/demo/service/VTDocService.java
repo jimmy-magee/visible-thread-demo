@@ -8,20 +8,20 @@ import com.visible.thread.demo.model.VTDoc;
 import com.visible.thread.demo.repository.TeamRepository;
 import com.visible.thread.demo.repository.UserRepository;
 import com.visible.thread.demo.repository.VTDocRepository;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.mongodb.gridfs.ReactiveGridFsResource;
 import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate;
-import org.springframework.http.codec.multipart.Part;
 import org.springframework.http.codec.multipart.FilePart;
-import org.springframework.http.codec.multipart.FormFieldPart;
+import org.springframework.http.codec.multipart.Part;
 import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.time.LocalDateTime;
-
-import java.util.Map;
-import java.util.SortedSet;
+import reactor.util.function.Tuple2;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 import static org.springframework.data.mongodb.core.query.Query.query;
@@ -60,7 +60,7 @@ public class VTDocService implements IVTDocService {
                 .flatMap(reactiveGridFsTemplate::getResource);
     }
 
-    public Mono<String> createVTDoc(Mono<MultiValueMap<String, Part>> formDataMono, final String teamId, final String userId) {
+    public Mono<String> createVTDoc(Mono<MultiValueMap<String, Part>> formDataMono, final String organisationId, final String teamId, final String userId) {
 
         return formDataMono.flatMap(partMultiValueMap -> {
 
@@ -77,24 +77,40 @@ public class VTDocService implements IVTDocService {
 
             VTDocUtils vtDocUtils = new VTDocUtils();
 
-            Flux<String> lines = vtDocUtils.getLines(filePart);
-            String fileName = filePart.filename();
-            Mono<Long> wordCount = vtDocUtils.calculateWordCount(lines);
-            Mono<SortedSet> topTenWords = vtDocUtils.calculateWordFrequency(lines);
+            Flux<String> linesIncludingBlanks = vtDocUtils.getLines(filePart);
+            Flux<String> lines = linesIncludingBlanks.filter(it -> StringUtils.isNotBlank(it));
 
-            DBObject metaData = new BasicDBObject();
-            metaData.put("teamId", teamId);
-            metaData.put("userId", userId);
-            metaData.put("fileName", fileName);
-            metaData.put("wordCount", wordCount);
-            metaData.put("wordFrequency", topTenWords);
+            Flux<String> wordsFlux = lines.flatMapIterable(VTDocUtils::extractWords);
+
+            Mono<Long> wordCountMono = vtDocUtils.calculateWordCount(wordsFlux);
+
+            Mono<List<Map.Entry<String, Long>>> topTenWordMono = vtDocUtils.calculateWordFrequency(wordsFlux, 10);
+
+            return Mono.zip(wordCountMono, topTenWordMono)
+                    .flatMap((Tuple2<Long, List<Map.Entry<String, Long>>> data) -> {
+
+                        List<Map.Entry<String, Long>> wordFrequencyList = data.getT2();
+
+                        List<String> topWords = wordFrequencyList.stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.toList());
+
+                        DBObject metaData = new BasicDBObject();
+                        metaData.put("organisationId", organisationId);
+                        metaData.put("teamId", teamId);
+                        metaData.put("userId", userId);
+                        metaData.put("createdDate", LocalDateTime.now());
+                        metaData.put("wordCount", data.getT1());
+                        metaData.put("wordFrequency", topWords);
+
+                        log.debug("Uploading doc {} with wordcount {}, and word frequency {}", filePart.filename(), data.getT1(), topWords);
 
 
-            return this.reactiveGridFsTemplate.store(filePart.content(),
-                            filePart.filename(),
-                            "txt",
-                            metaData)
-                    .map(objId -> objId.toString());
+                        return this.reactiveGridFsTemplate.store(filePart.content(),
+                                        filePart.filename(),
+                                        "txt",
+                                        metaData)
+                                .map(objId -> objId.toString());
+                    });
+
         });
     }
 

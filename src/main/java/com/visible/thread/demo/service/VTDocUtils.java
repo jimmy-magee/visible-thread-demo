@@ -1,5 +1,19 @@
 package com.visible.thread.demo.service;
 
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.SortedSet;
+import java.util.StringTokenizer;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.Part;
@@ -7,30 +21,26 @@ import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+@Slf4j
 public class VTDocUtils {
 
     public static final String REGEX_RULES = "^01\\d{9}$|^1\\d{9}|^d{0}$";
 
     public Mono<Long> calculateWordCount(final Flux<String> wordsFlux) {
-return null;
+        return wordsFlux.count();
     }
 
 
-    public Mono<SortedSet> calculateWordFrequency(final Flux<String> wordsFlux) {
+    public Mono<List<Map.Entry<String, Long>>> calculateWordFrequency(final Flux<String> wordsFlux, int size) {
         return wordsFlux.collect(TreeMap<String, Long>::new, (a, b) -> {
                     if (!a.containsKey(b)) {
                         a.put(b, 1L);
                     } else {
                         a.replace(b, a.get(b) + 1L);
                     }
-                }).map(this::entriesSortedByValuesReverseOrder);
+                }).map(this::entriesSortedByValuesReverseOrder)
+                .flatMap(set -> Flux.fromIterable(set).take(size).collectList());
+
     }
 
     // this is for multiple file upload
@@ -45,37 +55,31 @@ return null;
         return filePartMono.flatMapMany(this::getLines);
     }
 
+    public static <R> List<String> extractWords(String s) {
+
+        List<String> list = new ArrayList();
+        StringTokenizer tokenizer = new StringTokenizer(s);
+        while (tokenizer.hasMoreElements()) {
+            list.add(tokenizer.nextToken());
+        }
+        return list;
+    }
+
     // this is for single file upload
     public Flux<String> getLines(FilePart filePart) {
+        log.debug("Processing filePart {}", filePart);
         return filePart.content()
+                .doOnNext(System.out::println)
+                .filter(b -> b != null)
                 .map(dataBuffer -> {
                     byte[] bytes = new byte[dataBuffer.readableByteCount()];
                     dataBuffer.read(bytes);
                     DataBufferUtils.release(dataBuffer);
-
+                    //log.debug("Processing string {}", bytes);
                     return new String(bytes, StandardCharsets.UTF_8);
-                })
-                .map(this::processAndGetLinesAsList)
-                .flatMapIterable(Function.identity());
+                });
     }
 
-    // this is for both single and multiple file upload under `files` param key
-    public Flux<String> getLinesFromMap(Mono<MultiValueMap<String, Part>> filePartMap) {
-        return filePartMap.flatMapIterable(map ->
-                        map.keySet().stream()
-                                .filter(key -> key.equals("files"))
-                                .flatMap(key -> map.get(key).stream().filter(part -> part instanceof FilePart))
-                                .collect(Collectors.toList()))
-                .flatMap(part -> getLines((FilePart) part));
-    }
-
-    private List<String> processAndGetLinesAsList(String string) {
-
-        Supplier<Stream<String>> streamSupplier = string::lines;
-        var isFileOk = streamSupplier.get().allMatch(line -> line.matches(REGEX_RULES));
-
-        return isFileOk ? streamSupplier.get().filter(s -> !s.isBlank()).collect(Collectors.toList()) : new ArrayList<>();
-    }
 
     private  <K,V extends Comparable<? super V>> SortedSet<Map.Entry<K,V>> entriesSortedByValuesReverseOrder(Map<K,V> map) {
         SortedSet<Map.Entry<K,V>> sortedEntries = new TreeSet<Map.Entry<K,V>>(
@@ -89,5 +93,7 @@ return null;
         sortedEntries.addAll(map.entrySet());
         return sortedEntries;
     }
+
+
 
 }

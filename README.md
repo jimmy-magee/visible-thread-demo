@@ -29,14 +29,14 @@ From the command line run.
 
 ```
 curl -v -d '{"name":"Visible Thread", "description":"SAAS Provider"}' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/organisations
-export ORGANISATION_ID=62836ed05945e0520affebae
+export ORGANISATION_ID=6284993b76172b0235aac138
 ```
 
 ### Create a team
 
 ```
-curl -v -d '{"name":"Sales Team", "description":"Super Sales Team"}' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/teams
-export TEAM_ID=628372999188212ff0ad3898
+`curl -v -d '{"name":"Sales Team", "description":"Super Sales Team"}' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/teams
+`export TEAM_ID=6284999d76172b0235aac13a
 ```
 
 ###  Get all teams by organisation id
@@ -49,11 +49,11 @@ curl -v  http://localhost:8080/api/v1/${ORGANISATION_ID}/teams
 curl -v  http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}
 ```
 
-### Create a user
+### Create a user assigned to specified team in the specified organisation.
 
 ```
  curl -v -d '{"email":"alice@test.com", "firstName":"Alice", "lastName": "Pope" }' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}/users
- export USER_ID=62838b3ace37584e0d47b34f
+ export USER_ID=62849a0a76172b0235aac13b
  
  curl -v -d '{"email":"bob@test.com", "firstName":"Bob", "lastName": "Pope" }' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}/users
  export USER_ID=6283a353ea82dc21a411162e
@@ -104,7 +104,7 @@ curl -v -X DELETE  http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_
 ### Upload a document 
 
 ```
-curl -vvv -F "projectIdForm=5d089cfacec41e4acadda4f5" -F "profile=profile1" -F "doc=@/Users/jimmy/Documents/visible_thread/demo/src/main/resources/alice_in_wonderland.txt" -X POST http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID}/users/${USER_ID}
+curl -vvv -F "projectIdForm=5d089cfacec41e4acadda4f5" -F "profile=profile1" -F "doc=@/home/jimmy/Documents/visible_thread/visible-thread-demo/src/main/resources/alice_in_wonderland.txt" -X POST http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID}/users/${USER_ID}
 export DOCUMENT_ID=
 ```
 
@@ -123,7 +123,7 @@ From the mongo shell run.
 
 ```show dbs```
 
-``` use blog```
+``` use visible_thread_docs ```
 
 ```show collections```
 

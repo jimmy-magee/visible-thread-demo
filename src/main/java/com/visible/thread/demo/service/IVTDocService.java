@@ -18,7 +18,7 @@ public interface IVTDocService {
 
     public Flux<ReactiveGridFsResource> findByTeamId(final String teamId);
 
-    public Mono<String> createVTDoc(final Mono<MultiValueMap<String, Part>> multiPartFormMono, final String teamId, final String userId);
+    public Mono<String> createVTDoc(final Mono<MultiValueMap<String, Part>> multiPartFormMono, final String organisationId, final String teamId, final String userId);
 
     public Mono<VTDoc> updateVTDoc(final String id, final UpdateVTDocForm form);
 

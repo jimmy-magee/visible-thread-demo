@@ -1,11 +1,5 @@
 package com.visible.thread.demo;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,24 +10,19 @@ import java.util.function.Predicate;
 import java.util.stream.BaseStream;
 import java.util.stream.Collectors;
 
-import org.bson.types.ObjectId;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.test.context.event.annotation.AfterTestMethod;
 
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
-import com.mongodb.client.gridfs.model.GridFSFile;
-import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -57,48 +46,6 @@ public class GridFSLiveTest {
 
     }
 
-
-    @Test
-    public void givenFileWithMetadataExist_whenFindingFileById_thenFileWithMetadataIsFound() {
-        DBObject metaData = new BasicDBObject();
-        metaData.put("user", "alex");
-        InputStream inputStream = null;
-        ObjectId id = null;
-        try {
-            inputStream = new FileInputStream("src/main/resources/test.png");
-           // id = gridFsTemplate.store(inputStream, "test.png", "image/png", metaData);
-        } catch (FileNotFoundException ex) {
-            logger.error("File not found", ex);
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException ex) {
-                    logger.error("Failed to close", ex);
-                }
-            }
-        }
-
-       // GridFSFile gridFSFile = gridFsTemplate.findOne(new Query(Criteria.where("_id").is(id)));
-/*
-        assertThat(gridFSFile).isNotNull();
-//        assertNotNull(gridFSFile.getInputStream());
-//        assertThat(gridFSFile.numChunks(), is(1));
-//        assertThat(gridFSFile.containsField("filename"), is(true));
-        assertThat(gridFSFile.getFilename()).isEqualTo("test.png");
-        assertThat(gridFSFile.getObjectId()).isEqualTo(id);
-//        assertThat(gridFSFile.keySet().size(), is(9));
-//        assertNotNull(gridFSFile.getMD5());
-        assertThat(gridFSFile.getUploadDate());
-//        assertNull(gridFSFile.getAliases());
-        assertThat(gridFSFile.getChunkSize()).isNotNull();
-        //assertThat(gridFSFile.getMetadata().get("_contentType"), is("image/png"));
-        assertThat(gridFSFile.getFilename()).isEqualTo("test.png");
-        assertThat(gridFSFile.getMetadata().get("user")).isEqualTo("alex");
-
- */
-    }
-
     @Test
     public void filterForHighestValuesTestWithReduce() {
 
@@ -110,71 +57,9 @@ public class GridFSLiveTest {
                 .verifyComplete();
     }
 
-    @Test
-    public void givenMetadataAndFilesExist_whenFindingAllFiles_thenFilesWithMetadataAreFound() {
-        DBObject metaDataUser1 = new BasicDBObject();
-        metaDataUser1.put("user", "alex");
-        DBObject metaDataUser2 = new BasicDBObject();
-        metaDataUser2.put("user", "david");
-        InputStream inputStream = null;
-
-        try {
-            inputStream = new FileInputStream("src/main/resources/test.png");
-            //gridFsTemplate.store(inputStream, "test.png", "image/png", metaDataUser1);
-           // gridFsTemplate.store(inputStream, "test.png", "image/png", metaDataUser2);
-        } catch (FileNotFoundException ex) {
-            logger.error("File not found", ex);
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException ex) {
-                    logger.error("Failed to close", ex);
-                }
-            }
-        }
-
-        List<GridFSFile> gridFSFiles = new ArrayList<GridFSFile>();
-       // gridFsTemplate.find(new Query()).into(gridFSFiles);
-
-        //assertThat(gridFSFiles).isNotNull();
-        //assertThat(gridFSFiles.size()).isEqualTo(2);
-    }
-
-    @Test
-    public void givenMetadataAndFilesExist_whenFindingAllFilesOnQuery_thenFilesWithMetadataAreFoundOnQuery() {
-        DBObject metaDataUser1 = new BasicDBObject();
-        metaDataUser1.put("user", "alex");
-        DBObject metaDataUser2 = new BasicDBObject();
-        metaDataUser2.put("user", "david");
-        InputStream inputStream = null;
-
-        try {
-            inputStream = new FileInputStream("src/main/resources/test.png");
-            //gridFsTemplate.store(inputStream, "test.png", "image/png", metaDataUser1);
-            //gridFsTemplate.store(inputStream, "test.png", "image/png", metaDataUser2);
-        } catch (FileNotFoundException ex) {
-            logger.error("File not found", ex);
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException ex) {
-                    logger.error("Failed to close", ex);
-                }
-            }
-        }
-
-        List<GridFSFile> gridFSFiles = new ArrayList<GridFSFile>();
-       // gridFsTemplate.find(new Query(Criteria.where("metadata.user").is("alex"))).into(gridFSFiles);
-
-       // assertThat(gridFSFiles).isNotNull();
-        //assertThat(gridFSFiles.size()).isEqualTo(1);
-    }
 
     @Test
     public void normal() {
-
 
         Mono<SortedSet> wordFrequencyMono = Flux.just("the", "quick", "red", "fox", "the", "red", "the")
                 .collect(TreeMap<String, Integer>::new, (a, b) -> {
@@ -410,8 +295,7 @@ public class GridFSLiveTest {
 
     }
 
-    private <R> List<String> extractWords(String s) {
-
+    public static <R> List<String> extractWords(String s) {
 
         List<String> list = new ArrayList();
         StringTokenizer tokenizer =  new StringTokenizer(s);
@@ -422,38 +306,6 @@ public class GridFSLiveTest {
         return list;
     }
 
-    @Test
-    public void givenFileWithMetadataExist_whenGettingFileByResource_thenFileWithMetadataIsGotten() {
-        DBObject metaData = new BasicDBObject();
-        metaData.put("user", "alex");
-        InputStream inputStream = null;
-        try {
-            inputStream = new FileInputStream("src/main/resources/test.png");
-            //gridFsTemplate.store(inputStream, "test.png", "image/png", metaData).toString();
-        } catch (FileNotFoundException ex) {
-            logger.error("File not found", ex);
-        } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException ex) {
-                    logger.error("Failed to close", ex);
-                }
-            }
-        }
-
-       // GridFsResource[] gridFsResource = gridFsTemplate.getResources("test*");
-
-       // assertThat(gridFsResource).isNotNull();
-        //assertThat(gridFsResource.length).isEqualTo(1);
-       // assertThat(gridFsResource[0].getFilename()).isEqualTo("test.png");
-    }
-
-    private MultiValueMap<String, HttpEntity<?>> generateBody() {
-        MultipartBodyBuilder builder = new MultipartBodyBuilder();
-        builder.part("fileParts", new ClassPathResource("/alice_in_wonderland.txt", GridFSLiveTest.class));
-        return builder.build();
-    }
 
     private static Flux<String> fluxVersion(Path path) {
         final Runtime runtime = Runtime.getRuntime();

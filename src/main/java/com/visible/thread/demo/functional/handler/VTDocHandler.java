@@ -100,19 +100,24 @@ public class VTDocHandler {
      */
     public Mono<ServerResponse> uploadVTDocs(ServerRequest request) {
 
+        String organisationId = request.pathVariable("organisationId");
+
         String teamId = request.pathVariable("teamId");
 
         String userId = request.pathVariable("userId");
 
         Flux<Part> partFlux = request.body(BodyExtractors.toParts());
 
+        log.debug("Uploading doc for user {} in team {} in organisation {} ", userId, teamId, organisationId);
+
         Mono<MultiValueMap<String, Part>> multiPartFormMono = request.body(BodyExtractors.toMultipartData());
 
-        Mono<String> vtDocIdFlux = this.vtDocService.createVTDoc(multiPartFormMono, teamId, userId);
+        Mono<String> vtDocIdFlux = this.vtDocService.createVTDoc(multiPartFormMono, organisationId, teamId, userId);
 
       return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
                 .body(BodyInserters.fromPublisher(vtDocIdFlux, String.class));
+
     }
 
 
