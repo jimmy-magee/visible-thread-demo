@@ -122,16 +122,18 @@ curl -vvv -F "projectIdForm=5d089cfacec41e4acadda4f5" -F "profile=profile1" -F "
 export DOCUMENT_ID=
 ```
 
+
+### Get VTDoc by Id
 ```
-curl -vvv -F "projectIdForm=5d089cfacec41e4acadda4f5" -F "category=site image" -F "fileParts=@/Users/jimmy/Documents/visible_thread/demo/src/main/resources/alice_in_wonderland.txt" -F "fileParts=@/Users/jimmy/Documents/visible_thread/demo/src/main/resources/alice_in_wonderland.txt"  http://localhost:8080/api/v1/vtdocs/team123/user123
+curl -vvv http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID}/users/${USER_ID}/${DOCUMENT_ID}
 ```
 
-### Get a document by Id
+### Download VTDoc file content by Id
 ```
-curl -vvv http://localhost:8080/api/v1/team123/user123/vtdocs/${DOCUMENT_ID}
+curl -vvv http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID}/users/${USER_ID}/${DOCUMENT_ID}/download
 ```
 
-### Get documents by Team Id
+### Get VTDoc by Team Id
 ```
 curl -v http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID}
 ```

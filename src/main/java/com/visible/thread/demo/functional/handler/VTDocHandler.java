@@ -50,6 +50,22 @@ public class VTDocHandler {
      * @param request
      * @return response
      */
+    public Mono<ServerResponse> getVTDocById(ServerRequest request) {
+
+        String docId = request.pathVariable("id");
+
+        Mono<VTDocRepresentation> downloadFileFlux = this.vtDocService.findById(docId);
+
+        return ServerResponse.ok()
+                .contentType(APPLICATION_JSON)
+                .body(BodyInserters.fromPublisher(downloadFileFlux, VTDocRepresentation.class));
+
+    }
+
+    /**
+     * @param request
+     * @return response
+     */
     public Mono<ServerResponse> getVTDocsByUserId(ServerRequest request) {
 
         String userId = request.pathVariable("userId");
