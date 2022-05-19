@@ -2,15 +2,23 @@ package com.visible.thread.demo.service;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import com.visible.thread.demo.dto.representations.VTDocRepresentation;
 import com.visible.thread.demo.exception.VTDocNotFoundException;
 import com.visible.thread.demo.repository.TeamRepository;
 import com.visible.thread.demo.repository.UserRepository;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.gridfs.ReactiveGridFsResource;
 import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate;
 import org.springframework.http.codec.multipart.FilePart;
@@ -37,22 +45,43 @@ public class VTDocService implements IVTDocService {
         this.userRepository = userRepository;
     }
 
-    public Mono<ReactiveGridFsResource> findById(final String docId) {
+    public Mono<VTDocRepresentation> findById(final String docId) {
         return this.reactiveGridFsTemplate.findOne(query(where("_id").is(docId)))
                 .log()
-                .flatMap(reactiveGridFsTemplate::getResource);
+                .flatMap(reactiveGridFsTemplate::getResource)
+                .flatMap(this::toVTDocRepresentation);
     }
 
-    public Flux<ReactiveGridFsResource> findByTeamId(final String teamId) {
+    public Flux<VTDocRepresentation> findByTeamId(final String teamId) {
         return this.reactiveGridFsTemplate.find(query(where("metadata.teamId").is(teamId)))
                 .log()
+                .flatMap(reactiveGridFsTemplate::getResource)
+                .flatMap(this::toVTDocRepresentation);
+    }
+
+    public Flux<VTDocRepresentation> findByUserId(final String userId) {
+        return this.reactiveGridFsTemplate.find(query(where("metadata.userId").is(userId)))
+                .log()
+                .flatMap(reactiveGridFsTemplate::getResource)
+                .flatMap(this::toVTDocRepresentation);
+    }
+
+
+    public Flux<ReactiveGridFsResource> findDocsByDateRange(final String fromDate, final String toDate) {
+        Query rangeQuery = new Query();
+        Criteria criteria = new Criteria();
+        criteria.where("metadata.createdDate").gt(fromDate).lt(toDate);
+        rangeQuery.addCriteria(criteria);
+
+        return this.reactiveGridFsTemplate.find(rangeQuery)
                 .flatMap(reactiveGridFsTemplate::getResource);
     }
 
-    public Flux<ReactiveGridFsResource> findByUserId(final String userId) {
-        return this.reactiveGridFsTemplate.find(query(where("metadata.userId").is(userId)))
+    public Flux<DataBuffer> getDownloadStream(final String docId) {
+        return this.reactiveGridFsTemplate.findOne(query(where("_id").is(docId)))
                 .log()
-                .flatMap(reactiveGridFsTemplate::getResource);
+                .flatMap(reactiveGridFsTemplate::getResource)
+                .flatMapMany(r -> r.getDownloadStream());
     }
 
     public Mono<String> createVTDoc(Mono<MultiValueMap<String, Part>> formDataMono, final String organisationId, final String teamId, final String userId) {
@@ -109,11 +138,23 @@ public class VTDocService implements IVTDocService {
         });
     }
 
-
     public Mono<Void> deleteVTDoc(final String docId) {
         return this.reactiveGridFsTemplate.findOne(query(where("_id").is(docId)))
                 .switchIfEmpty(Mono.error(new VTDocNotFoundException("VTDoc with id " + docId + " does not exist")))
                 .flatMap(savedVTDoc -> this.reactiveGridFsTemplate.delete(query(where("_id").is(docId))));
+    }
+
+    private Mono<VTDocRepresentation> toVTDocRepresentation(ReactiveGridFsResource gridFsResource) {
+        return Mono.just(VTDocRepresentation.builder()
+                .id(gridFsResource.getFileId().toString())
+                .organisationId(gridFsResource.getOptions().getMetadata().get("organisationId", String.class))
+                .teamId(gridFsResource.getOptions().getMetadata().get("teamId", String.class))
+                .userId(gridFsResource.getOptions().getMetadata().get("userId", String.class))
+                .dateUploaded(gridFsResource.getOptions().getMetadata().get("createdDate", java.util.Date.class).toString())
+                .wordCount(gridFsResource.getOptions().getMetadata().get("wordCount", Long.class))
+                .wordFrequency(gridFsResource.getOptions().getMetadata().get("wordFrequency", ArrayList.class))
+                .fileName(gridFsResource.getFilename())
+                .build());
     }
 
 }

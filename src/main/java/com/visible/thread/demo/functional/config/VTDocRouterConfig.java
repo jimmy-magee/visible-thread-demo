@@ -26,9 +26,9 @@ public class VTDocRouterConfig {
     public RouterFunction vTDocRoute(VTDocHandler vTDocHandler) {
         return RouterFunctions
                 .route(GET("/api/v1/vtdocs/{organisationId}/teams/{teamId}").and(accept(APPLICATION_JSON)), vTDocHandler::getVTDocsByTeamId)
-                .andRoute(GET("/api/v1/vtdocs/{organisationId}/teams/{teamId}/users/{userId}").and(accept(APPLICATION_JSON)), vTDocHandler::getVTDocByUserId)
-                .andRoute(GET("/api/v1/vtdocs/{organisationId}/teams/{teamId}/users/{userId}/{id}").and(accept(APPLICATION_JSON)), vTDocHandler::downloadVTDocById)
-                .andRoute(POST("/api/v1/vtdocs/{organisationId}/teams/{teamId}/users/{userId}").and(accept(MULTIPART_FORM_DATA)), vTDocHandler::uploadVTDocs)
+                .andRoute(GET("/api/v1/vtdocs/{organisationId}/teams/{teamId}/users/{userId}").and(accept(APPLICATION_JSON)), vTDocHandler::getVTDocsByUserId)
+                .andRoute(GET("/api/v1/vtdocs/{organisationId}/teams/{teamId}/users/{userId}/{id}").and(accept(APPLICATION_JSON)), vTDocHandler::downloadVTDocContentById)
+                .andRoute(POST("/api/v1/vtdocs/{organisationId}/teams/{teamId}/users/{userId}").and(accept(MULTIPART_FORM_DATA)), vTDocHandler::uploadVTDoc)
                 .andRoute(DELETE("/api/v1/vtdocs/{organisationId}/teams/{teamId}/users/{userId}/{id}").and(accept(APPLICATION_JSON)), vTDocHandler::deleteVTDoc);
     }
 

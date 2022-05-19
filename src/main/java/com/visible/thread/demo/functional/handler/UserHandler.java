@@ -11,8 +11,11 @@ import com.visible.thread.demo.model.Team;
 import com.visible.thread.demo.model.User;
 import com.visible.thread.demo.repository.TeamRepository;
 import com.visible.thread.demo.repository.UserRepository;
+import com.visible.thread.demo.service.IVTDocService;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.data.mongodb.gridfs.GridFsObject;
+import org.springframework.data.mongodb.gridfs.ReactiveGridFsResource;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -29,11 +32,13 @@ import java.util.List;
 @Slf4j
 public class UserHandler {
 
+    private final IVTDocService vtDocService;
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
 
 
-    public UserHandler(final UserRepository userRepository, final TeamRepository teamRepository) {
+    public UserHandler(final IVTDocService vtDocService, final UserRepository userRepository, final TeamRepository teamRepository) {
+        this.vtDocService = vtDocService;
         this.userRepository = userRepository;
         this.teamRepository = teamRepository;
     }
@@ -128,14 +133,14 @@ public class UserHandler {
                     Team team = data.getT1();
                     UserRepresentation user = data.getT2();
 
-                    if(!team.getUsers().contains(user.getId())) {
-                            team.getUsers().add(user.getId());
+                    if (!team.getUsers().contains(user.getId())) {
+                        team.getUsers().add(user.getId());
                     }
 
                     return this.teamRepository.save(team)
                             .flatMap(updatedTeam -> ServerResponse.ok()
-                            .contentType(APPLICATION_JSON)
-                            .body(BodyInserters.fromValue(user)));
+                                    .contentType(APPLICATION_JSON)
+                                    .body(BodyInserters.fromValue(user)));
                 });
 
     }
@@ -146,7 +151,7 @@ public class UserHandler {
         String id = request.pathVariable("userId");
         Mono<UpdateUserForm> formMono = request.bodyToMono(UpdateUserForm.class);
         log.debug("Updating user {}", id);
-        Mono<User> savedMono = formMono
+        Mono<UserRepresentation> savedMono = formMono
                 .flatMap(form -> {
                     return userRepository.findById(id)
                             .switchIfEmpty(Mono.error(new UserNotFoundException("User with id " + id + " does not exist")))
@@ -157,12 +162,11 @@ public class UserHandler {
                                 user.setPhone(form.getPhone());
                                 user.setModificationDate(LocalDateTime.now());
                                 return this.userRepository.save(user);
-                            });
-
+                            }).flatMap(this::toUserRepresentation);
                 });
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
-                .body(BodyInserters.fromPublisher(savedMono, User.class));
+                .body(BodyInserters.fromPublisher(savedMono, UserRepresentation.class));
     }
 
     public Mono<ServerResponse> findUsersCreatedInDateRange(ServerRequest request) {
@@ -174,19 +178,57 @@ public class UserHandler {
         Flux<UserRepresentation> userFlux = formMono
                 .flatMap(form -> {
                     log.debug("Looking up users created between {} and {}", form.getStartDate(), form.getEndDate());
-
                     LocalDate startDate = LocalDate.parse(form.getStartDate());
                     LocalDate endDate = LocalDate.parse(form.getEndDate());
 
-                    return userRepository.findByOrganisationId(organisationId)
-                            .filter(u -> u.getCreatedDate().isAfter(startDate.atStartOfDay())
-                                    && u.getCreatedDate().isBefore(endDate.atTime(LocalTime.MAX)))
+                    return findUsersCreatedInDateRange(organisationId, startDate, endDate)
                             .flatMap(this::toUserRepresentation)
                             .collectList();
                 }).flatMapMany(Flux::fromIterable);
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
                 .body(BodyInserters.fromPublisher(userFlux, UserRepresentation.class));
+    }
+
+
+    public Mono<ServerResponse> findInActiveUsersInDateRange(ServerRequest request) {
+
+        String organisationId = request.pathVariable("organisationId");
+
+        Mono<UserCreationQueryForm> formMono = request.bodyToMono(UserCreationQueryForm.class);
+
+       return formMono
+                .flatMap(form -> {
+
+                    LocalDate startDate = LocalDate.parse(form.getStartDate());
+                    LocalDate endDate = LocalDate.parse(form.getEndDate());
+
+                    Flux<String> createdUserIdFlux = findUsersCreatedInDateRange(organisationId, startDate, endDate).map(User::getId)
+                            .doOnNext(s -> log.debug("Found user (created) with id {}", s));
+
+                    Flux<ReactiveGridFsResource> reactiveGridFsResourceFlux = this.vtDocService.findDocsByDateRange(form.getStartDate(), form.getStartDate());
+
+                    Flux<String> activeUserIdFlux = reactiveGridFsResourceFlux.map(ReactiveGridFsResource::getOptions)
+                            .map(GridFsObject.Options::getMetadata)
+                            .map(metaData -> metaData.get("userId", String.class))
+                            .doOnNext(s -> log.debug("Found user (active) with id {}", s))
+                            .filter(s -> s != null)
+                            .cache();
+
+                    Flux<String> filteredFlux = createdUserIdFlux.filterWhen(createdUserId -> activeUserIdFlux.hasElement(createdUserId).map(hasElement -> !hasElement))
+                            .doOnNext(s -> log.debug("Found user (inactive) with id {}", s));
+
+                    return filteredFlux.collectList()
+                            .flatMap( u -> ServerResponse.ok()
+                            .contentType(APPLICATION_JSON)
+                            .body(BodyInserters.fromValue(u)));
+                });
+    }
+
+    private Flux<User> findUsersCreatedInDateRange(final String organisationId, final LocalDate startDate, final LocalDate endDate) {
+        return userRepository.findByOrganisationId(organisationId)
+                .filter(u -> u.getCreatedDate().isAfter(startDate.atStartOfDay())
+                        && u.getCreatedDate().isBefore(endDate.atTime(LocalTime.MAX)));
     }
 
 
@@ -205,7 +247,7 @@ public class UserHandler {
             return this.teamRepository.save(team);
         }).collectList();
 
-        return updatedTeamsMono.flatMap( list -> {
+        return updatedTeamsMono.flatMap(list -> {
             return this.userRepository.findById(userId)
                     .flatMap(savedUser -> ServerResponse.ok()
                             .body(BodyInserters.fromPublisher(this.userRepository.delete(savedUser), Void.class)))

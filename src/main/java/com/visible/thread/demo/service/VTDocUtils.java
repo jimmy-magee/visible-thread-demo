@@ -69,8 +69,7 @@ public class VTDocUtils {
     public Flux<String> getLines(FilePart filePart) {
         log.debug("Processing filePart {}", filePart);
         return filePart.content()
-                .doOnNext(System.out::println)
-                .filter(b -> b != null)
+                .filter(buffer -> buffer != null)
                 .map(dataBuffer -> {
                     byte[] bytes = new byte[dataBuffer.readableByteCount()];
                     dataBuffer.read(bytes);

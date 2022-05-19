@@ -2,6 +2,7 @@ package com.visible.thread.demo.functional.handler;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
+import com.visible.thread.demo.dto.representations.VTDocRepresentation;
 import com.visible.thread.demo.service.IVTDocService;
 
 import org.springframework.core.io.buffer.DataBuffer;
@@ -35,16 +36,13 @@ public class VTDocHandler {
 
         String teamId = request.pathVariable("teamId");
 
-        log.info("downloading files for {} as stream", teamId);
+        log.info("Get VTDocs by team id {}", teamId);
 
-        Flux<DataBuffer> downloadFileFlux = this.vtDocService.findByTeamId(teamId)
-                .flatMap(r -> { String fileName = r.getFilename();
-                    log.info("downloading {} as stream", fileName);
-                    return r.getDownloadStream();});
+        Flux<VTDocRepresentation> downloadFileFlux = this.vtDocService.findByTeamId(teamId);
 
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
-                .body(BodyInserters.fromPublisher(downloadFileFlux, DataBuffer.class));
+                .body(BodyInserters.fromPublisher(downloadFileFlux, VTDocRepresentation.class));
 
     }
 
@@ -52,35 +50,27 @@ public class VTDocHandler {
      * @param request
      * @return response
      */
-    public Mono<ServerResponse> downloadVTDocById(ServerRequest request) {
-
-        String id = request.pathVariable("id");
-
-        Flux<DataBuffer> downloadFileFlux = this.vtDocService.findById(id)
-                .flatMapMany(r -> { String fileName = r.getFilename();
-                    log.info("downloading {} as stream", fileName);
-                return r.getDownloadStream();});
-
-        return ServerResponse.ok()
-                .contentType(APPLICATION_JSON)
-                .body(BodyInserters.fromPublisher(downloadFileFlux, DataBuffer.class));
-
-    }
-
-    /**
-     * @param request
-     * @return response
-     */
-    public Mono<ServerResponse> getVTDocByUserId(ServerRequest request) {
+    public Mono<ServerResponse> getVTDocsByUserId(ServerRequest request) {
 
         String userId = request.pathVariable("userId");
 
-        Flux<DataBuffer> downloadFileFlux = this.vtDocService.findByUserId(userId)
-                .flatMap(r -> {
-                    String fileName = r.getFilename();
-                    log.info("downloading {} as stream", fileName);
-                    return r.getDownloadStream();
-                });
+        Flux<VTDocRepresentation> downloadFileFlux = this.vtDocService.findByUserId(userId);
+
+        return ServerResponse.ok()
+                .contentType(APPLICATION_JSON)
+                .body(BodyInserters.fromPublisher(downloadFileFlux, VTDocRepresentation.class));
+
+    }
+
+    /**
+     * @param request
+     * @return response
+     */
+    public Mono<ServerResponse> downloadVTDocContentById(ServerRequest request) {
+
+        String id = request.pathVariable("id");
+
+        Flux<DataBuffer> downloadFileFlux = this.vtDocService.getDownloadStream(id);
 
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
@@ -92,7 +82,7 @@ public class VTDocHandler {
      * @param request
      * @return response
      */
-    public Mono<ServerResponse> uploadVTDocs(ServerRequest request) {
+    public Mono<ServerResponse> uploadVTDoc(ServerRequest request) {
 
         String organisationId = request.pathVariable("organisationId");
 

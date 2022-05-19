@@ -1,5 +1,7 @@
 package com.visible.thread.demo.functional.handler;
 
+import com.visible.thread.demo.config.ApplicationConfig;
+import com.visible.thread.demo.config.DatasourceConfig;
 import com.visible.thread.demo.config.SecurityConfig;
 import com.visible.thread.demo.dto.forms.NewUserForm;
 import com.visible.thread.demo.dto.forms.UpdateUserForm;
@@ -26,7 +28,7 @@ import java.util.List;
 
 import static org.mockito.Mockito.*;
 
-@ContextConfiguration(classes = {UserRouterConfig.class, SecurityConfig.class})
+@ContextConfiguration(classes = {UserRouterConfig.class, SecurityConfig.class, ApplicationConfig.class, DatasourceConfig.class})
 @WebFluxTest
 public class UserHandlerTest {
 
@@ -129,7 +131,7 @@ public class UserHandlerTest {
         when(userRepository.save(any())).thenReturn(userMono);
 
 
-        webTestClient.post().uri("/api/v1/{organisationId}/teams/{teamId}/users/{userId}", organisationId, teamId,  userId)
+        webTestClient.post().uri("/api/v1/{organisationId}/users/{userId}", organisationId, teamId,  userId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(Mono.just(requestBody), UpdateUserForm.class)
@@ -166,7 +168,7 @@ public class UserHandlerTest {
         when(userRepository.findById(anyString())).thenReturn(userMono);
         when(userRepository.delete(any())).thenReturn(Mono.empty());
 
-        webTestClient.post().uri("/api/v1/{organisationId}/teams/{teamId}/users/{userId}", organisationId, teamId, userId)
+        webTestClient.post().uri("/api/v1/{organisationId}/users/{userId}", organisationId, teamId, userId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
@@ -239,7 +241,7 @@ public class UserHandlerTest {
 
         when(userRepository.findById(anyString())).thenReturn(userMono);
 
-        webTestClient.get().uri("/api/v1/{organisationId}/teams/{teamId}/users/{userId}", organisationId, teamId, userId)
+        webTestClient.get().uri("/api/v1/{organisationId}/users/{userId}", organisationId, teamId, userId)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk()

@@ -91,11 +91,17 @@ export USER_EMAIL=alice%40test.com
 curl -v -X GET http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_ID}/users/email/${USER_EMAIL}
 ```
 
-### Get users created in between the specified date range.
+### Query users created in the specified date range.
 
 ```
- curl -v -d '{"startDate":"2022-02-01", "endDate":"2022-06-01" }' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/users/query_by_date_range
+ curl -v -d '{"startDate":"2022-02-01", "endDate":"2022-06-01" }' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/users/query/users_created_date_range
  
+```
+
+### Query inactive users in the specified date range.
+
+```
+ curl -v -d '{"startDate":"2022-02-01", "endDate":"2022-06-01" }' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/users/query/users_inactive_date_range
  
 ```
 
@@ -112,7 +118,7 @@ curl -v -X DELETE  http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_
 ### Upload a document 
 
 ```
-curl -vvv -F "projectIdForm=5d089cfacec41e4acadda4f5" -F "profile=profile1" -F "doc=@/home/jimmy/Documents/visible_thread/visible-thread-demo/src/main/resources/alice_in_wonderland.txt" -X POST http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID}/users/${USER_ID}
+curl -vvv -F "projectIdForm=5d089cfacec41e4acadda4f5" -F "profile=profile1" -F "doc=@/Users/jimmy/Documents/visible_thread/visible-thread-demo/src/main/resources/alice_in_wonderland.txt" -X POST http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID}/users/${USER_ID}
 export DOCUMENT_ID=
 ```
 
@@ -123,6 +129,11 @@ curl -vvv -F "projectIdForm=5d089cfacec41e4acadda4f5" -F "category=site image" -
 ### Get a document by Id
 ```
 curl -vvv http://localhost:8080/api/v1/team123/user123/vtdocs/${DOCUMENT_ID}
+```
+
+### Get documents by Team Id
+```
+curl -v http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID}
 ```
 
 ### Example db commands

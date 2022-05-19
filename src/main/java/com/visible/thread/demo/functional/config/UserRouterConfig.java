@@ -3,6 +3,7 @@ package com.visible.thread.demo.functional.config;
 import com.visible.thread.demo.functional.handler.UserHandler;
 import com.visible.thread.demo.repository.TeamRepository;
 import com.visible.thread.demo.repository.UserRepository;
+import com.visible.thread.demo.service.IVTDocService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,8 +19,8 @@ public class UserRouterConfig {
 
     @Bean
     @Autowired
-    public UserHandler userHandler(final UserRepository userRepository, final TeamRepository teamRepository) {
-        return new UserHandler(userRepository, teamRepository);
+    public UserHandler userHandler(final IVTDocService vtDocService, final UserRepository userRepository, final TeamRepository teamRepository) {
+        return new UserHandler(vtDocService, userRepository, teamRepository);
     }
 
     @Bean
@@ -28,7 +29,8 @@ public class UserRouterConfig {
                 .route(GET("/api/v1/{organisationId}/users").and(accept(APPLICATION_JSON)), userHandler::getAllUsersByOrganisationId)
                 .andRoute(GET("/api/v1/{organisationId}/users/{userId}").and(accept(APPLICATION_JSON)), userHandler::getUserById)
                 .andRoute(GET("/api/v1/{organisationId}/users/email/{email_address}").and(accept(APPLICATION_JSON)), userHandler::getUserByEmail)
-                .andRoute(POST("/api/v1/{organisationId}/users/query_by_date_range").and(accept(APPLICATION_JSON)), userHandler::findUsersCreatedInDateRange)
+                .andRoute(POST("/api/v1/{organisationId}/users/query/users_created_date_range").and(accept(APPLICATION_JSON)), userHandler::findUsersCreatedInDateRange)
+                .andRoute(POST("/api/v1/{organisationId}/users/query/users_inactive_date_range").and(accept(APPLICATION_JSON)), userHandler::findInActiveUsersInDateRange)
                 .andRoute(POST("/api/v1/{organisationId}/teams/{teamId}/users").and(accept(APPLICATION_JSON)), userHandler::createUser)
                 .andRoute(POST("/api/v1/{organisationId}/users/{userId}").and(accept(APPLICATION_JSON)), userHandler::updateUser)
                 .andRoute(DELETE("/api/v1/{organisationId}/users/{userId}").and(accept(APPLICATION_JSON)), userHandler::deleteUser);

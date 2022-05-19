@@ -1,18 +1,25 @@
 package com.visible.thread.demo.service;
 
+import com.visible.thread.demo.dto.representations.VTDocRepresentation;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.data.mongodb.gridfs.ReactiveGridFsResource;
 import org.springframework.http.codec.multipart.Part;
 import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+
 public interface IVTDocService {
 
-    public Mono<ReactiveGridFsResource> findById(final String docId);
+    public Mono<VTDocRepresentation> findById(final String docId);
 
-    public Flux<ReactiveGridFsResource> findByUserId(final String userId);
+    public Flux<DataBuffer> getDownloadStream(final String docId);
 
-    public Flux<ReactiveGridFsResource> findByTeamId(final String teamId);
+    public Flux<VTDocRepresentation> findByUserId(final String userId);
+
+    public Flux<VTDocRepresentation> findByTeamId(final String teamId);
+
+    public Flux<ReactiveGridFsResource> findDocsByDateRange(final String fromDate, final String toDate);
 
     public Mono<String> createVTDoc(final Mono<MultiValueMap<String, Part>> multiPartFormMono, final String organisationId, final String teamId, final String userId);
 
