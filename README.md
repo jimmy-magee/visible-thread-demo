@@ -119,7 +119,7 @@ curl -v -X DELETE  http://localhost:8080/api/v1/${ORGANISATION_ID}/teams/${TEAM_
 
 ```
 curl -vvv -F "projectIdForm=5d089cfacec41e4acadda4f5" -F "profile=profile1" -F "doc=@/Users/jimmy/Documents/visible_thread/visible-thread-demo/src/main/resources/alice_in_wonderland.txt" -X POST http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID}/users/${USER_ID}
-export DOCUMENT_ID=
+export DOCUMENT_ID=628611964e4942373c8d002b
 ```
 
 

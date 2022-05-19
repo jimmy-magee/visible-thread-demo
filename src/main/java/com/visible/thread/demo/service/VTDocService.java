@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 import lombok.extern.slf4j.Slf4j;
@@ -86,6 +87,8 @@ public class VTDocService implements IVTDocService {
 
     public Mono<String> createVTDoc(Mono<MultiValueMap<String, Part>> formDataMono, final String organisationId, final String teamId, final String userId) {
 
+        List<String> stopWords = Stream.of("The", "Me", "I", "Of", "And", "A", "We").map(s -> s.toLowerCase()).collect(Collectors.toList());
+
         return formDataMono.flatMap(partMultiValueMap -> {
 
             Map<String, Part> partMap = partMultiValueMap.toSingleValueMap();
@@ -108,14 +111,16 @@ public class VTDocService implements IVTDocService {
 
             Mono<Long> wordCountMono = vtDocUtils.calculateWordCount(wordsFlux);
 
-            Mono<List<Map.Entry<String, Long>>> topTenWordMono = vtDocUtils.calculateWordFrequency(wordsFlux, 10);
+            Flux<String> wordsLessStopWordsFlux = wordsFlux.filter( word -> !stopWords.contains(word.toLowerCase()));
+
+            Mono<List<Map.Entry<String, Long>>> topTenWordMono = vtDocUtils.calculateWordFrequency(wordsLessStopWordsFlux, 10);
 
             return Mono.zip(wordCountMono, topTenWordMono)
                     .flatMap((Tuple2<Long, List<Map.Entry<String, Long>>> data) -> {
 
                         List<Map.Entry<String, Long>> wordFrequencyList = data.getT2();
 
-                        List<String> topWords = wordFrequencyList.stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.toList());
+                        List<String> topTenWords = wordFrequencyList.stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.toList());
 
                         DBObject metaData = new BasicDBObject();
                         metaData.put("organisationId", organisationId);
@@ -123,9 +128,9 @@ public class VTDocService implements IVTDocService {
                         metaData.put("userId", userId);
                         metaData.put("createdDate", LocalDateTime.now());
                         metaData.put("wordCount", data.getT1());
-                        metaData.put("wordFrequency", topWords);
+                        metaData.put("wordFrequency", topTenWords);
 
-                        log.debug("Uploading doc {} with wordcount {}, and word frequency {}", filePart.filename(), data.getT1(), topWords);
+                        log.debug("Uploading doc {} with wordcount {}, and word frequency {}", filePart.filename(), data.getT1(), topTenWords);
 
 
                         return this.reactiveGridFsTemplate.store(filePart.content(),
