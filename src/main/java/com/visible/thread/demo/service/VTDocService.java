@@ -7,6 +7,7 @@ import com.visible.thread.demo.exception.VTDocNotFoundException;
 import com.visible.thread.demo.repository.TeamRepository;
 import com.visible.thread.demo.repository.UserRepository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +61,18 @@ public class VTDocService implements IVTDocService {
                 .flatMap(reactiveGridFsTemplate::getResource)
                 .flatMap(this::toVTDocRepresentation);
     }
+
+    @Override
+    public Flux<VTDocRepresentation> findByTeamIdAndDate(String teamId, LocalDate date) {
+        Query rangeQuery = new Query();
+        Criteria criteria = new Criteria();
+        criteria.where("metadata.createdDate").gt(date.minusDays(1)).lt(date.plusDays(1));
+        rangeQuery.addCriteria(criteria);
+
+        return this.reactiveGridFsTemplate.find(rangeQuery)
+                .flatMap(reactiveGridFsTemplate::getResource).flatMap(this::toVTDocRepresentation);
+    }
+
 
     public Flux<VTDocRepresentation> findByUserId(final String userId) {
         return this.reactiveGridFsTemplate.find(query(where("metadata.userId").is(userId)))

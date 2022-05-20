@@ -138,6 +138,11 @@ curl -vvv http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID
 curl -v http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID}
 ```
 
+### Get VTDoc by Team Id and Date
+```
+curl -v http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID}/date/2022-05-20
+```
+
 ### Example db commands
 
 From the mongo shell run. 

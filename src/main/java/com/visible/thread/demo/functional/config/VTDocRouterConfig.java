@@ -26,6 +26,7 @@ public class VTDocRouterConfig {
     public RouterFunction vTDocRoute(VTDocHandler vTDocHandler) {
         return RouterFunctions
                 .route(GET("/api/v1/vtdocs/{organisationId}/teams/{teamId}").and(accept(APPLICATION_JSON)), vTDocHandler::getVTDocsByTeamId)
+                .andRoute(GET("/api/v1/vtdocs/{organisationId}/teams/{teamId}/date/{date}").and(accept(APPLICATION_JSON)), vTDocHandler::getVTDocsByTeamIdAndDate)
                 .andRoute(GET("/api/v1/vtdocs/{organisationId}/teams/{teamId}/users/{userId}").and(accept(APPLICATION_JSON)), vTDocHandler::getVTDocsByUserId)
                 .andRoute(GET("/api/v1/vtdocs/{organisationId}/teams/{teamId}/users/{userId}/{id}").and(accept(APPLICATION_JSON)), vTDocHandler::getVTDocById)
                 .andRoute(GET("/api/v1/vtdocs/{organisationId}/teams/{teamId}/users/{userId}/{id}/download").and(accept(APPLICATION_JSON)), vTDocHandler::downloadVTDocContentById)

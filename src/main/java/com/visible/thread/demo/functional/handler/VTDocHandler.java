@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.LocalDate;
 
 /**
  * VTDoc Api Service
@@ -25,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 public class VTDocHandler {
 
     private final IVTDocService vtDocService;
-
 
     public VTDocHandler(final IVTDocService vtDocService) {
         this.vtDocService = vtDocService;
@@ -38,11 +38,26 @@ public class VTDocHandler {
 
         log.debug("Get VTDocs by team id {}", teamId);
 
-        Flux<VTDocRepresentation> downloadFileFlux = this.vtDocService.findByTeamId(teamId);
+        Flux<VTDocRepresentation> vtDocRepresentationFlux = this.vtDocService.findByTeamId(teamId);
 
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
-                .body(BodyInserters.fromPublisher(downloadFileFlux, VTDocRepresentation.class));
+                .body(BodyInserters.fromPublisher(vtDocRepresentationFlux, VTDocRepresentation.class));
+
+    }
+
+    public Mono<ServerResponse> getVTDocsByTeamIdAndDate(ServerRequest request) {
+
+        String teamId = request.pathVariable("teamId");
+        String date = request.pathVariable("date");
+
+        log.debug("Get VTDocs by team id {} and date {}", teamId, date);
+
+        Flux<VTDocRepresentation> vtDocRepresentationFlux = this.vtDocService.findByTeamIdAndDate(teamId, LocalDate.parse(date));
+
+        return ServerResponse.ok()
+                .contentType(APPLICATION_JSON)
+                .body(BodyInserters.fromPublisher(vtDocRepresentationFlux, VTDocRepresentation.class));
 
     }
 
@@ -54,11 +69,11 @@ public class VTDocHandler {
 
         String docId = request.pathVariable("id");
 
-        Mono<VTDocRepresentation> downloadFileFlux = this.vtDocService.findById(docId);
+        Mono<VTDocRepresentation> vtDocRepresentationFlux = this.vtDocService.findById(docId);
 
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
-                .body(BodyInserters.fromPublisher(downloadFileFlux, VTDocRepresentation.class));
+                .body(BodyInserters.fromPublisher(vtDocRepresentationFlux, VTDocRepresentation.class));
 
     }
 
@@ -70,11 +85,11 @@ public class VTDocHandler {
 
         String userId = request.pathVariable("userId");
 
-        Flux<VTDocRepresentation> downloadFileFlux = this.vtDocService.findByUserId(userId);
+        Flux<VTDocRepresentation> vtDocRepresentationFlux = this.vtDocService.findByUserId(userId);
 
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
-                .body(BodyInserters.fromPublisher(downloadFileFlux, VTDocRepresentation.class));
+                .body(BodyInserters.fromPublisher(vtDocRepresentationFlux, VTDocRepresentation.class));
 
     }
 
