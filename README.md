@@ -168,3 +168,9 @@ The following guides illustrate how to use some features concretely:
 * [Accessing Data with MongoDB](https://spring.io/guides/gs/accessing-data-mongodb/)
 * [File Reading in Reactor](https://simonbasle.github.io/2017/10/file-reading-in-reactor/)
 
+
+### General
+
+* [Serverlese](https://thenewstack.io/the-evolution-of-the-serverless-first-engineer/)
+* [RxJS](https://www.akveo.com/blog/an-introduction-to-rxjs-things-you-need-to-know-in-2022)
+

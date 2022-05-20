@@ -68,14 +68,14 @@ public class VTDocService implements IVTDocService {
     }
 
 
-    public Flux<ReactiveGridFsResource> findDocsByDateRange(final String fromDate, final String toDate) {
+    public Flux<VTDocRepresentation> findDocsByDateRange(final String fromDate, final String toDate) {
         Query rangeQuery = new Query();
         Criteria criteria = new Criteria();
         criteria.where("metadata.createdDate").gt(fromDate).lt(toDate);
         rangeQuery.addCriteria(criteria);
 
         return this.reactiveGridFsTemplate.find(rangeQuery)
-                .flatMap(reactiveGridFsTemplate::getResource);
+                .flatMap(reactiveGridFsTemplate::getResource).flatMap(this::toVTDocRepresentation);
     }
 
     public Flux<DataBuffer> getDownloadStream(final String docId) {

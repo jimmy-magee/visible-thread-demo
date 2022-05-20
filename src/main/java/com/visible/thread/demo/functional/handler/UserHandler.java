@@ -6,6 +6,7 @@ import com.visible.thread.demo.dto.forms.NewUserForm;
 import com.visible.thread.demo.dto.forms.UpdateUserForm;
 import com.visible.thread.demo.dto.forms.UserCreationQueryForm;
 import com.visible.thread.demo.dto.representations.UserRepresentation;
+import com.visible.thread.demo.dto.representations.VTDocRepresentation;
 import com.visible.thread.demo.exception.UserNotFoundException;
 import com.visible.thread.demo.model.Team;
 import com.visible.thread.demo.model.User;
@@ -203,19 +204,15 @@ public class UserHandler {
                     LocalDate startDate = LocalDate.parse(form.getStartDate());
                     LocalDate endDate = LocalDate.parse(form.getEndDate());
 
-                    Flux<String> createdUserIdFlux = findUsersCreatedInDateRange(organisationId, startDate, endDate).map(User::getId)
+                    Flux<String> createdUserIdFlux = this.userRepository.findByOrganisationId(organisationId).map(User::getId)
                             .doOnNext(s -> log.debug("Found user (created) with id {}", s));
 
-                    Flux<ReactiveGridFsResource> reactiveGridFsResourceFlux = this.vtDocService.findDocsByDateRange(form.getStartDate(), form.getStartDate());
+                    Flux<VTDocRepresentation> reactiveGridFsResourceFlux = this.vtDocService.findDocsByDateRange(form.getStartDate(), form.getStartDate());
 
-                    Flux<String> activeUserIdFlux = reactiveGridFsResourceFlux.map(ReactiveGridFsResource::getOptions)
-                            .map(GridFsObject.Options::getMetadata)
-                            .map(metaData -> metaData.get("userId", String.class))
-                            .doOnNext(s -> log.debug("Found user (active) with id {}", s))
-                            .filter(s -> s != null)
-                            .cache();
+                    Flux<String> activeUserIdFlux = reactiveGridFsResourceFlux.map(VTDocRepresentation::getUserId).cache();
 
-                    Flux<String> filteredFlux = createdUserIdFlux.filterWhen(createdUserId -> activeUserIdFlux.hasElement(createdUserId).map(hasElement -> !hasElement))
+                    Flux<String> filteredFlux = createdUserIdFlux.filterWhen(createdUserId -> activeUserIdFlux.hasElement(createdUserId)
+                                    .map(hasElement -> !hasElement))
                             .doOnNext(s -> log.debug("Found user (inactive) with id {}", s));
 
                     return filteredFlux.collectList()
