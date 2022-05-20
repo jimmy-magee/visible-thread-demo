@@ -5,19 +5,16 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableSet;
 import java.util.SortedSet;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ResolvableType;
+import org.springframework.core.codec.StringDecoder;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.codec.multipart.FilePart;
-import org.springframework.http.codec.multipart.Part;
-import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -30,6 +27,13 @@ public class VTDocUtils {
         return wordsFlux.count();
     }
 
+    private static final StringDecoder stringDecoder = StringDecoder.textPlainOnly();
+
+    private static final ResolvableType STRING_TYPE = ResolvableType.forClass(String.class);
+
+    public Flux<String> decode(Flux<DataBuffer> inputStream) {
+        return stringDecoder.decode(inputStream, STRING_TYPE, null, null );
+    }
 
     public Mono<List<Map.Entry<String, Long>>> calculateWordFrequency(final Flux<String> wordsFlux, int size) {
         return wordsFlux.collect(TreeMap<String, Long>::new, (a, b) -> {
@@ -92,7 +96,5 @@ public class VTDocUtils {
         sortedEntries.addAll(map.entrySet());
         return sortedEntries;
     }
-
-
 
 }

@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -36,11 +35,13 @@ import static org.springframework.data.mongodb.core.query.Query.query;
 @Slf4j
 public class VTDocService implements IVTDocService {
 
+    private final VTDocUtils vtDocUtils;
+    private final ReactiveGridFsTemplate reactiveGridFsTemplate;
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
-    private final ReactiveGridFsTemplate reactiveGridFsTemplate;
 
-    public VTDocService(final ReactiveGridFsTemplate reactiveGridFsTemplate, final TeamRepository teamRepository, final UserRepository userRepository) {
+    public VTDocService(final VTDocUtils vtDocUtils, final ReactiveGridFsTemplate reactiveGridFsTemplate, final TeamRepository teamRepository, final UserRepository userRepository) {
+        this.vtDocUtils = vtDocUtils;
         this.reactiveGridFsTemplate = reactiveGridFsTemplate;
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
@@ -85,6 +86,15 @@ public class VTDocService implements IVTDocService {
                 .flatMapMany(r -> r.getDownloadStream());
     }
 
+    public Mono<Long> getWordOccurances(final String docId, final String searchWord) {
+        return this.reactiveGridFsTemplate.findOne(query(where("_id").is(docId)))
+                .log()
+                .flatMap(reactiveGridFsTemplate::getResource)
+                .flatMapMany(r -> vtDocUtils.decode(r.getContent()))
+                .filter( s -> s.toLowerCase().equals(searchWord.toLowerCase()))
+                .count();
+    }
+
     public Mono<String> createVTDoc(Mono<MultiValueMap<String, Part>> formDataMono, final String organisationId, final String teamId, final String userId) {
 
         List<String> stopWords = Stream.of("The", "Me", "I", "Of", "And", "A", "We").map(s -> s.toLowerCase()).collect(Collectors.toList());
@@ -101,8 +111,6 @@ public class VTDocService implements IVTDocService {
             FilePart filePart = (FilePart) partMap.get("doc");
             // form fields example
             //FormFieldPart version = (FormFieldPart) partMap.get("version");
-
-            VTDocUtils vtDocUtils = new VTDocUtils();
 
             Flux<String> linesIncludingBlanks = vtDocUtils.getLines(filePart);
             Flux<String> lines = linesIncludingBlanks.filter(it -> StringUtils.isNotBlank(it));

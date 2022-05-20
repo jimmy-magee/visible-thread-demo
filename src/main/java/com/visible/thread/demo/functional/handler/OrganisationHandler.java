@@ -30,6 +30,11 @@ public class OrganisationHandler {
     }
 
 
+    /**
+     *
+     * @param request
+     * @return
+     */
     public Mono<ServerResponse> getAllOrganisations(ServerRequest request) {
 
         Flux<OrganisationRepresentation> organisations = this.organisationRepository.findAll()
@@ -93,6 +98,11 @@ public class OrganisationHandler {
     }
 
 
+    /**
+     *
+     * @param organisation
+     * @return Mono<OrganisationRepresentation>
+     */
     private Mono<OrganisationRepresentation> toOrganisationRepresentation(final Organisation organisation) {
 
         return Mono.just(

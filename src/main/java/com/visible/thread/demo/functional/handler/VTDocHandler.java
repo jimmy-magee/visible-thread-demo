@@ -36,7 +36,7 @@ public class VTDocHandler {
 
         String teamId = request.pathVariable("teamId");
 
-        log.info("Get VTDocs by team id {}", teamId);
+        log.debug("Get VTDocs by team id {}", teamId);
 
         Flux<VTDocRepresentation> downloadFileFlux = this.vtDocService.findByTeamId(teamId);
 

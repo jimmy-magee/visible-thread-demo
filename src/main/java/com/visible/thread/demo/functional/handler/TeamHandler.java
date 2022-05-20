@@ -36,7 +36,12 @@ public class TeamHandler {
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
 
-
+    /**
+     *
+     * @param organisationRepository
+     * @param teamRepository
+     * @param userRepository
+     */
     public TeamHandler(final OrganisationRepository organisationRepository, final TeamRepository teamRepository, final UserRepository userRepository) {
 
         this.organisationRepository = organisationRepository;
@@ -72,7 +77,6 @@ public class TeamHandler {
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
                 .body(BodyInserters.fromPublisher(teamFlux, TeamRepresentation.class));
-
     }
 
     /**
@@ -89,6 +93,10 @@ public class TeamHandler {
 
     }
 
+    /**
+     * @param request
+     * @return
+     */
     public Mono<ServerResponse> getTeamUsers(ServerRequest request) {
         String id = request.pathVariable("teamId");
         Mono<TeamRepresentation> teamMono = this.teamRepository.findById(id)
@@ -147,6 +155,10 @@ public class TeamHandler {
     }
 
 
+    /**
+     * @param request
+     * @return
+     */
     public Mono<ServerResponse> updateTeam(ServerRequest request) {
 
         String id = request.pathVariable("teamId");
@@ -171,6 +183,11 @@ public class TeamHandler {
 
     }
 
+    /**
+     *
+     * @param request
+     * @return
+     */
     public Mono<ServerResponse> addUserToTeam(ServerRequest request) {
 
         String teamId = request.pathVariable("teamId");
@@ -201,6 +218,11 @@ public class TeamHandler {
                 .body(BodyInserters.fromPublisher(updatedTeamMono, TeamRepresentation.class));
     }
 
+    /**
+     *
+     * @param request
+     * @return
+     */
     public Mono<ServerResponse> removeUserFromTeam(ServerRequest request) {
 
         String teamId = request.pathVariable("teamId");
@@ -249,6 +271,11 @@ public class TeamHandler {
     }
 
 
+    /**
+     *
+     * @param team
+     * @return
+     */
     private Mono<TeamRepresentation> toTeamRepresentation(final Team team) {
 
         Mono<List<User>> userListMono = this.userRepository.findAll()

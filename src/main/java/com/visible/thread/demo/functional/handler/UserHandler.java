@@ -15,8 +15,6 @@ import com.visible.thread.demo.repository.UserRepository;
 import com.visible.thread.demo.service.IVTDocService;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.data.mongodb.gridfs.GridFsObject;
-import org.springframework.data.mongodb.gridfs.ReactiveGridFsResource;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -38,6 +36,12 @@ public class UserHandler {
     private final UserRepository userRepository;
 
 
+    /**
+     *
+     * @param vtDocService
+     * @param userRepository
+     * @param teamRepository
+     */
     public UserHandler(final IVTDocService vtDocService, final UserRepository userRepository, final TeamRepository teamRepository) {
         this.vtDocService = vtDocService;
         this.userRepository = userRepository;
@@ -146,7 +150,10 @@ public class UserHandler {
 
     }
 
-
+    /**
+     * @param request
+     * @return response
+     */
     public Mono<ServerResponse> updateUser(ServerRequest request) {
 
         String id = request.pathVariable("userId");
@@ -170,6 +177,10 @@ public class UserHandler {
                 .body(BodyInserters.fromPublisher(savedMono, UserRepresentation.class));
     }
 
+    /**
+     * @param request
+     * @return response
+     */
     public Mono<ServerResponse> findUsersCreatedInDateRange(ServerRequest request) {
 
         String organisationId = request.pathVariable("organisationId");
@@ -192,6 +203,10 @@ public class UserHandler {
     }
 
 
+    /**
+     * @param request
+     * @return response
+     */
     public Mono<ServerResponse> findInActiveUsersInDateRange(ServerRequest request) {
 
         String organisationId = request.pathVariable("organisationId");
@@ -222,6 +237,13 @@ public class UserHandler {
                 });
     }
 
+    /**
+     *
+     * @param organisationId
+     * @param startDate
+     * @param endDate
+     * @return
+     */
     private Flux<User> findUsersCreatedInDateRange(final String organisationId, final LocalDate startDate, final LocalDate endDate) {
         return userRepository.findByOrganisationId(organisationId)
                 .filter(u -> u.getCreatedDate().isAfter(startDate.atStartOfDay())
@@ -254,6 +276,11 @@ public class UserHandler {
     }
 
 
+    /**
+     *
+     * @param user
+     * @return
+     */
     private Mono<UserRepresentation> toUserRepresentation(final User user) {
 
         return Mono.just(
