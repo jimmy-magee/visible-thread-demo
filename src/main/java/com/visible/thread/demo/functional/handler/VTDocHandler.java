@@ -18,6 +18,7 @@ import reactor.core.publisher.Mono;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * VTDoc Api Service
@@ -53,7 +54,7 @@ public class VTDocHandler {
 
         log.debug("Get VTDocs by team id {} and date {}", teamId, date);
 
-        Flux<VTDocRepresentation> vtDocRepresentationFlux = this.vtDocService.findByTeamIdAndDate(teamId, LocalDate.parse(date));
+        Flux<VTDocRepresentation> vtDocRepresentationFlux = this.vtDocService.findByTeamIdAndDate(teamId, date);
 
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
@@ -127,11 +128,11 @@ public class VTDocHandler {
 
         Mono<MultiValueMap<String, Part>> multiPartFormMono = request.body(BodyExtractors.toMultipartData());
 
-        Mono<String> vtDocIdFlux = this.vtDocService.createVTDoc(multiPartFormMono, organisationId, teamId, userId);
+        Mono<VTDocRepresentation> vtDocRepresentationMono = this.vtDocService.createVTDoc(multiPartFormMono, organisationId, teamId, userId);
 
       return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
-                .body(BodyInserters.fromPublisher(vtDocIdFlux, String.class));
+                .body(BodyInserters.fromPublisher(vtDocRepresentationMono, VTDocRepresentation.class));
 
     }
 
@@ -146,8 +147,6 @@ public class VTDocHandler {
 
         return ServerResponse.ok().body(BodyInserters.fromPublisher(this.vtDocService.deleteVTDoc(vTDocId), Void.class));
     }
-
-
 
 }
 

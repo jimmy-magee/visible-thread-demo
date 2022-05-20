@@ -9,7 +9,9 @@ import com.visible.thread.demo.repository.UserRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -63,14 +65,17 @@ public class VTDocService implements IVTDocService {
     }
 
     @Override
-    public Flux<VTDocRepresentation> findByTeamIdAndDate(String teamId, LocalDate date) {
+    public Flux<VTDocRepresentation> findByTeamIdAndDate(final String teamId, final String date) {
         Query rangeQuery = new Query();
         Criteria criteria = new Criteria();
-        criteria.where("metadata.createdDate").gt(date.minusDays(1)).lt(date.plusDays(1));
+        criteria.where("metadata.teamId").is(teamId);
         rangeQuery.addCriteria(criteria);
 
         return this.reactiveGridFsTemplate.find(rangeQuery)
-                .flatMap(reactiveGridFsTemplate::getResource).flatMap(this::toVTDocRepresentation);
+                .flatMap(reactiveGridFsTemplate::getResource)
+                .filter(r -> VTDocUtils.compareDates( VTDocUtils.getFileCreatedDate(r), LocalDate.parse(date)))
+                .doOnNext(System.out::println)
+                .flatMap(this::toVTDocRepresentation);
     }
 
 
@@ -82,14 +87,12 @@ public class VTDocService implements IVTDocService {
     }
 
 
-    public Flux<VTDocRepresentation> findDocsByDateRange(final String fromDate, final String toDate) {
-        Query rangeQuery = new Query();
-        Criteria criteria = new Criteria();
-        criteria.where("metadata.createdDate").gt(fromDate).lt(toDate);
-        rangeQuery.addCriteria(criteria);
+    public Flux<VTDocRepresentation> findDocsByDateRange(final String organisationId, final String fromDate, final String toDate) {
 
-        return this.reactiveGridFsTemplate.find(rangeQuery)
-                .flatMap(reactiveGridFsTemplate::getResource).flatMap(this::toVTDocRepresentation);
+        return this.reactiveGridFsTemplate.find(query(where("metadata.organisationId").is(organisationId)))
+                .flatMap(reactiveGridFsTemplate::getResource)
+                .filter(r -> VTDocUtils.getFileCreatedDate(r).isAfter(LocalDate.parse(fromDate)) && VTDocUtils.getFileCreatedDate(r).isBefore(LocalDate.parse(toDate)))
+                .flatMap(this::toVTDocRepresentation);
     }
 
     public Flux<DataBuffer> getDownloadStream(final String docId) {
@@ -108,7 +111,7 @@ public class VTDocService implements IVTDocService {
                 .count();
     }
 
-    public Mono<String> createVTDoc(Mono<MultiValueMap<String, Part>> formDataMono, final String organisationId, final String teamId, final String userId) {
+    public Mono<VTDocRepresentation> createVTDoc(Mono<MultiValueMap<String, Part>> formDataMono, final String organisationId, final String teamId, final String userId) {
 
         List<String> stopWords = Stream.of("The", "Me", "I", "Of", "And", "A", "We").map(s -> s.toLowerCase()).collect(Collectors.toList());
 
@@ -122,10 +125,9 @@ public class VTDocService implements IVTDocService {
                 Mono.error(new RuntimeException("No file attached.."));
             }
             FilePart filePart = (FilePart) partMap.get("doc");
-            // form fields example
-            //FormFieldPart version = (FormFieldPart) partMap.get("version");
 
             Flux<String> linesIncludingBlanks = vtDocUtils.getLines(filePart);
+
             Flux<String> lines = linesIncludingBlanks.filter(it -> StringUtils.isNotBlank(it));
 
             Flux<String> wordsFlux = lines.flatMapIterable(VTDocUtils::extractWords);
@@ -158,7 +160,8 @@ public class VTDocService implements IVTDocService {
                                         filePart.filename(),
                                         "txt",
                                         metaData)
-                                .map(objId -> objId.toString());
+                                .map(Object::toString)
+                                .flatMap(this::findById);
                     });
 
         });
@@ -171,7 +174,8 @@ public class VTDocService implements IVTDocService {
     }
 
     private Mono<VTDocRepresentation> toVTDocRepresentation(ReactiveGridFsResource gridFsResource) {
-        return Mono.just(VTDocRepresentation.builder()
+
+        VTDocRepresentation vtDoc = VTDocRepresentation.builder()
                 .id(gridFsResource.getFileId().toString())
                 .organisationId(gridFsResource.getOptions().getMetadata().get("organisationId", String.class))
                 .teamId(gridFsResource.getOptions().getMetadata().get("teamId", String.class))
@@ -180,7 +184,10 @@ public class VTDocService implements IVTDocService {
                 .wordCount(gridFsResource.getOptions().getMetadata().get("wordCount", Long.class))
                 .wordFrequency(gridFsResource.getOptions().getMetadata().get("wordFrequency", ArrayList.class))
                 .fileName(gridFsResource.getFilename())
-                .build());
+                .build();
+        log.info("Building VTDoc reprsentation {}", vtDoc);
+        return Mono.just(vtDoc);
+
     }
 
 }

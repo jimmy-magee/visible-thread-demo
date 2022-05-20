@@ -7,7 +7,7 @@ import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 public interface IVTDocService {
@@ -20,11 +20,11 @@ public interface IVTDocService {
 
     public Flux<VTDocRepresentation> findByTeamId(final String teamId);
 
-    public Flux<VTDocRepresentation> findByTeamIdAndDate(final String teamId, final LocalDate date);
+    public Flux<VTDocRepresentation> findByTeamIdAndDate(final String teamId, final String date);
 
-    public Flux<VTDocRepresentation> findDocsByDateRange(final String fromDate, final String toDate);
+    public Flux<VTDocRepresentation> findDocsByDateRange(final String organisationId, final String fromDate, final String toDate);
 
-    public Mono<String> createVTDoc(final Mono<MultiValueMap<String, Part>> multiPartFormMono, final String organisationId, final String teamId, final String userId);
+    public Mono<VTDocRepresentation> createVTDoc(final Mono<MultiValueMap<String, Part>> multiPartFormMono, final String organisationId, final String teamId, final String userId);
 
     public Mono<Void> deleteVTDoc(final String id);
 

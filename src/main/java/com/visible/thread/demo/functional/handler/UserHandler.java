@@ -222,7 +222,7 @@ public class UserHandler {
                     Flux<String> createdUserIdFlux = this.userRepository.findByOrganisationId(organisationId).map(User::getId)
                             .doOnNext(s -> log.debug("Found user (created) with id {}", s));
 
-                    Flux<VTDocRepresentation> reactiveGridFsResourceFlux = this.vtDocService.findDocsByDateRange(form.getStartDate(), form.getStartDate());
+                    Flux<VTDocRepresentation> reactiveGridFsResourceFlux = this.vtDocService.findDocsByDateRange(organisationId, form.getStartDate(), form.getStartDate());
 
                     Flux<String> activeUserIdFlux = reactiveGridFsResourceFlux.map(VTDocRepresentation::getUserId).cache();
 
