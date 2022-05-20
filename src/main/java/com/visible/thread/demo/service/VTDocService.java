@@ -9,9 +9,7 @@ import com.visible.thread.demo.repository.UserRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -38,13 +36,11 @@ import static org.springframework.data.mongodb.core.query.Query.query;
 @Slf4j
 public class VTDocService implements IVTDocService {
 
-    private final VTDocUtils vtDocUtils;
     private final ReactiveGridFsTemplate reactiveGridFsTemplate;
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
 
-    public VTDocService(final VTDocUtils vtDocUtils, final ReactiveGridFsTemplate reactiveGridFsTemplate, final TeamRepository teamRepository, final UserRepository userRepository) {
-        this.vtDocUtils = vtDocUtils;
+    public VTDocService(final ReactiveGridFsTemplate reactiveGridFsTemplate, final TeamRepository teamRepository, final UserRepository userRepository) {
         this.reactiveGridFsTemplate = reactiveGridFsTemplate;
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
@@ -74,7 +70,6 @@ public class VTDocService implements IVTDocService {
         return this.reactiveGridFsTemplate.find(rangeQuery)
                 .flatMap(reactiveGridFsTemplate::getResource)
                 .filter(r -> VTDocUtils.compareDates( VTDocUtils.getFileCreatedDate(r), LocalDate.parse(date)))
-                .doOnNext(System.out::println)
                 .flatMap(this::toVTDocRepresentation);
     }
 
@@ -106,7 +101,7 @@ public class VTDocService implements IVTDocService {
         return this.reactiveGridFsTemplate.findOne(query(where("_id").is(docId)))
                 .log()
                 .flatMap(reactiveGridFsTemplate::getResource)
-                .flatMapMany(r -> vtDocUtils.decode(r.getContent()))
+                .flatMapMany(r -> VTDocUtils.decode(r.getContent()))
                 .filter( s -> s.toLowerCase().equals(searchWord.toLowerCase()))
                 .count();
     }
@@ -126,17 +121,17 @@ public class VTDocService implements IVTDocService {
             }
             FilePart filePart = (FilePart) partMap.get("doc");
 
-            Flux<String> linesIncludingBlanks = vtDocUtils.getLines(filePart);
+            Flux<String> linesIncludingBlanks = VTDocUtils.getLines(filePart);
 
             Flux<String> lines = linesIncludingBlanks.filter(it -> StringUtils.isNotBlank(it));
 
             Flux<String> wordsFlux = lines.flatMapIterable(VTDocUtils::extractWords);
 
-            Mono<Long> wordCountMono = vtDocUtils.calculateWordCount(wordsFlux);
+            Mono<Long> wordCountMono = VTDocUtils.calculateWordCount(wordsFlux);
 
             Flux<String> wordsLessStopWordsFlux = wordsFlux.filter( word -> !stopWords.contains(word.toLowerCase()));
 
-            Mono<List<Map.Entry<String, Long>>> topTenWordMono = vtDocUtils.calculateWordFrequency(wordsLessStopWordsFlux, 10);
+            Mono<List<Map.Entry<String, Long>>> topTenWordMono = VTDocUtils.calculateWordFrequency(wordsLessStopWordsFlux, 10);
 
             return Mono.zip(wordCountMono, topTenWordMono)
                     .flatMap((Tuple2<Long, List<Map.Entry<String, Long>>> data) -> {
@@ -153,8 +148,7 @@ public class VTDocService implements IVTDocService {
                         metaData.put("wordCount", data.getT1());
                         metaData.put("wordFrequency", topTenWords);
 
-                        log.debug("Uploading doc {} with wordcount {}, and word frequency {}", filePart.filename(), data.getT1(), topTenWords);
-
+                        log.debug("Uploading doc {} with word count {}, and word frequency {}", filePart.filename(), data.getT1(), topTenWords);
 
                         return this.reactiveGridFsTemplate.store(filePart.content(),
                                         filePart.filename(),
@@ -185,7 +179,7 @@ public class VTDocService implements IVTDocService {
                 .wordFrequency(gridFsResource.getOptions().getMetadata().get("wordFrequency", ArrayList.class))
                 .fileName(gridFsResource.getFilename())
                 .build();
-        log.info("Building VTDoc reprsentation {}", vtDoc);
+        log.info("Building VTDoc representation {}", vtDoc);
         return Mono.just(vtDoc);
 
     }

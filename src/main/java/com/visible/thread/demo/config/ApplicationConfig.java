@@ -4,7 +4,6 @@ import com.visible.thread.demo.repository.TeamRepository;
 import com.visible.thread.demo.repository.UserRepository;
 import com.visible.thread.demo.service.IVTDocService;
 import com.visible.thread.demo.service.VTDocService;
-import com.visible.thread.demo.service.VTDocUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,7 +15,7 @@ public class ApplicationConfig {
     @Bean
     @Autowired
     public IVTDocService vtDocService(final ReactiveGridFsTemplate reactiveGridFsTemplate, final TeamRepository teamRepository, final UserRepository userRepository) {
-        return new VTDocService(new VTDocUtils(), reactiveGridFsTemplate, teamRepository, userRepository);
+        return new VTDocService(reactiveGridFsTemplate, teamRepository, userRepository);
     }
 
 

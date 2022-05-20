@@ -20,7 +20,7 @@ public class VTDocUtils {
 
     public static final String REGEX_RULES = "^01\\d{9}$|^1\\d{9}|^d{0}$";
 
-    public Mono<Long> calculateWordCount(final Flux<String> wordsFlux) {
+    public static Mono<Long> calculateWordCount(final Flux<String> wordsFlux) {
         return wordsFlux.count();
     }
 
@@ -97,6 +97,12 @@ public class VTDocUtils {
 
     public static Boolean compareDates(LocalDate firstDate, LocalDate secondDate) {
 
+        if(firstDate == null ) {
+            return Boolean.FALSE;
+        }
+        if(secondDate == null ) {
+            return  Boolean.FALSE;
+        }
         return firstDate.getYear() == secondDate.getYear() &&
                 firstDate.getMonth() == secondDate.getMonth() &&
                 firstDate.getDayOfMonth() == secondDate.getDayOfMonth();
@@ -104,11 +110,15 @@ public class VTDocUtils {
     }
 
     public static LocalDate getFileCreatedDate(ReactiveGridFsResource fsResource) {
-        return fsResource.getOptions().getMetadata()
-                .get("createdDate", Date.class)
-                .toInstant()
-                .atZone(ZoneId.systemDefault())
-                .toLocalDate();
+        if(fsResource.getOptions().getMetadata().containsKey("createdDate")) {
+            return fsResource.getOptions().getMetadata()
+                    .get("createdDate", Date.class)
+                    .toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate();
+        } else {
+            return null;
+        }
     }
 
 }
