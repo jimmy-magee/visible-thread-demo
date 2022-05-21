@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.Document;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -101,7 +102,7 @@ public class VTDocService implements IVTDocService {
         return this.reactiveGridFsTemplate.findOne(query(where("_id").is(docId)))
                 .log()
                 .flatMap(reactiveGridFsTemplate::getResource)
-                .flatMapMany(r -> VTDocUtils.decode(r.getContent()))
+                .flatMapMany(r -> VTDocUtils.dataBufferToStringFlux(r.getContent()))
                 .filter( s -> s.toLowerCase().equals(searchWord.toLowerCase()))
                 .count();
     }
@@ -121,11 +122,9 @@ public class VTDocService implements IVTDocService {
             }
             FilePart filePart = (FilePart) partMap.get("doc");
 
-            Flux<String> linesIncludingBlanks = VTDocUtils.getLines(filePart);
-
-            Flux<String> lines = linesIncludingBlanks.filter(it -> StringUtils.isNotBlank(it));
-
-            Flux<String> wordsFlux = lines.flatMapIterable(VTDocUtils::extractWords);
+            Flux<String> wordsFlux = VTDocUtils.getLines(filePart)
+                    .filter(it -> StringUtils.isNotBlank(it))
+                    .flatMapIterable(VTDocUtils::extractWords);
 
             Mono<Long> wordCountMono = VTDocUtils.calculateWordCount(wordsFlux);
 
@@ -138,7 +137,8 @@ public class VTDocService implements IVTDocService {
 
                         List<Map.Entry<String, Long>> wordFrequencyList = data.getT2();
 
-                        List<String> topTenWords = wordFrequencyList.stream().map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.toList());
+                        List<String> topTenWords = wordFrequencyList.stream()
+                                .map(entry -> entry.getKey() + " = " + entry.getValue()).collect(Collectors.toList());
 
                         DBObject metaData = new BasicDBObject();
                         metaData.put("organisationId", organisationId);
@@ -169,14 +169,16 @@ public class VTDocService implements IVTDocService {
 
     private Mono<VTDocRepresentation> toVTDocRepresentation(ReactiveGridFsResource gridFsResource) {
 
+        Document metaData = gridFsResource.getOptions().getMetadata();
+        
         VTDocRepresentation vtDoc = VTDocRepresentation.builder()
                 .id(gridFsResource.getFileId().toString())
-                .organisationId(gridFsResource.getOptions().getMetadata().get("organisationId", String.class))
-                .teamId(gridFsResource.getOptions().getMetadata().get("teamId", String.class))
-                .userId(gridFsResource.getOptions().getMetadata().get("userId", String.class))
-                .dateUploaded(gridFsResource.getOptions().getMetadata().get("createdDate", java.util.Date.class).toString())
-                .wordCount(gridFsResource.getOptions().getMetadata().get("wordCount", Long.class))
-                .wordFrequency(gridFsResource.getOptions().getMetadata().get("wordFrequency", ArrayList.class))
+                .organisationId(metaData.get("organisationId", String.class))
+                .teamId(metaData.get("teamId", String.class))
+                .userId(metaData.get("userId", String.class))
+                .dateUploaded(metaData.get("createdDate", java.util.Date.class).toString())
+                .wordCount(metaData.get("wordCount", Long.class))
+                .wordFrequency(metaData.get("wordFrequency", ArrayList.class))
                 .fileName(gridFsResource.getFilename())
                 .build();
         log.info("Building VTDoc representation {}", vtDoc);

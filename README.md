@@ -133,12 +133,12 @@ curl -vvv http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID
 curl -vvv http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID}/users/${USER_ID}/${DOCUMENT_ID}/download
 ```
 
-### Get VTDoc by Team Id
+### Get VTDocs by Team Id
 ```
 curl -v http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID}
 ```
 
-### Get VTDoc by Team Id and Date
+### Get VTDocs by Team Id and Date
 ```
 curl -v http://localhost:8080/api/v1/vtdocs/${ORGANISATION_ID}/teams/${TEAM_ID}/date/2022-05-20
 ```

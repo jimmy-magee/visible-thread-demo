@@ -20,18 +20,34 @@ public class VTDocUtils {
 
     public static final String REGEX_RULES = "^01\\d{9}$|^1\\d{9}|^d{0}$";
 
-    public static Mono<Long> calculateWordCount(final Flux<String> wordsFlux) {
-        return wordsFlux.count();
-    }
-
     private static final StringDecoder stringDecoder = StringDecoder.textPlainOnly();
 
     private static final ResolvableType STRING_TYPE = ResolvableType.forClass(String.class);
 
-    public static Flux<String> decode(Flux<DataBuffer> inputStream) {
+    /**
+     *
+     * @param wordsFlux
+     * @return
+     */
+    public static Mono<Long> calculateWordCount(final Flux<String> wordsFlux) {
+        return wordsFlux.count();
+    }
+
+    /**
+     *
+     * @param inputStream
+     * @return
+     */
+    public static Flux<String> dataBufferToStringFlux(Flux<DataBuffer> inputStream) {
         return stringDecoder.decode(inputStream, STRING_TYPE, null, null);
     }
 
+    /**
+     *
+     * @param wordsFlux
+     * @param size
+     * @return
+     */
     public static Mono<List<Map.Entry<String, Long>>> calculateWordFrequency(final Flux<String> wordsFlux, int size) {
         return wordsFlux.collect(TreeMap<String, Long>::new, (a, b) -> {
                     if (!a.containsKey(b)) {
@@ -44,18 +60,13 @@ public class VTDocUtils {
 
     }
 
-    // this is for multiple file upload
-    public static Flux<String> getLines(Flux<FilePart> filePartFlux) {
 
-        return filePartFlux.flatMap(VTDocUtils::getLines);
-    }
-
-    // this is for single file upload
-    public static Flux<String> getLines(Mono<FilePart> filePartMono) {
-
-        return filePartMono.flatMapMany(VTDocUtils::getLines);
-    }
-
+    /**
+     *
+     * @param s
+     * @param <R>
+     * @return
+     */
     public static <R> List<String> extractWords(String s) {
 
         List<String> list = new ArrayList();
@@ -66,7 +77,11 @@ public class VTDocUtils {
         return list;
     }
 
-    // this is for single file upload
+    /**
+     *
+     * @param filePart
+     * @return
+     */
     public static Flux<String> getLines(FilePart filePart) {
         log.debug("Processing filePart {}", filePart);
         return filePart.content()
@@ -80,21 +95,12 @@ public class VTDocUtils {
                 });
     }
 
-
-    public static <K, V extends Comparable<? super V>> SortedSet<Map.Entry<K, V>> entriesSortedByValuesReverseOrder(Map<K, V> map) {
-        SortedSet<Map.Entry<K, V>> sortedEntries = new TreeSet<Map.Entry<K, V>>(
-                new Comparator<Map.Entry<K, V>>() {
-                    @Override
-                    public int compare(Map.Entry<K, V> e1, Map.Entry<K, V> e2) {
-                        int res = e2.getValue().compareTo(e1.getValue());
-                        return res != 0 ? res : 1;
-                    }
-                }
-        );
-        sortedEntries.addAll(map.entrySet());
-        return sortedEntries;
-    }
-
+    /**
+     *
+     * @param firstDate
+     * @param secondDate
+     * @return
+     */
     public static Boolean compareDates(LocalDate firstDate, LocalDate secondDate) {
 
         if(firstDate == null ) {
@@ -109,6 +115,11 @@ public class VTDocUtils {
 
     }
 
+    /**
+     *
+     * @param fsResource
+     * @return
+     */
     public static LocalDate getFileCreatedDate(ReactiveGridFsResource fsResource) {
         if(fsResource.getOptions().getMetadata().containsKey("createdDate")) {
             return fsResource.getOptions().getMetadata()
@@ -120,5 +131,49 @@ public class VTDocUtils {
             return null;
         }
     }
+
+    /**
+     *
+     * @param map
+     * @param <K>
+     * @param <V>
+     * @return
+     */
+    public static <K, V extends Comparable<? super V>> SortedSet<Map.Entry<K, V>> entriesSortedByValuesReverseOrder(Map<K, V> map) {
+        SortedSet<Map.Entry<K, V>> sortedEntries = new TreeSet<Map.Entry<K, V>>(
+                new Comparator<Map.Entry<K, V>>() {
+                    @Override
+                    public int compare(Map.Entry<K, V> e1, Map.Entry<K, V> e2) {
+                        int res = e2.getValue().compareTo(e1.getValue());
+                        return res != 0 ? res : 1;
+                    }
+                }
+        );
+        sortedEntries.addAll(map.entrySet());
+        return sortedEntries;
+    }
+
+    /**
+     *
+     * @param filePartFlux
+     * @return
+     */
+    // this is for multiple file upload
+    public static Flux<String> getLines(Flux<FilePart> filePartFlux) {
+
+        return filePartFlux.flatMap(VTDocUtils::getLines);
+    }
+
+    /**
+     *
+     * @param filePartMono
+     * @return
+     */
+    // this is for single file upload
+    public static Flux<String> getLines(Mono<FilePart> filePartMono) {
+
+        return filePartMono.flatMapMany(VTDocUtils::getLines);
+    }
+
 
 }

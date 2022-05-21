@@ -7,9 +7,9 @@ import org.springframework.util.MultiValueMap;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
-
-
+/**
+ *  Interfacse for VTDoc Service
+ */
 public interface IVTDocService {
 
     public Mono<VTDocRepresentation> findById(final String docId);
