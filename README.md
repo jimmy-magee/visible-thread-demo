@@ -35,7 +35,7 @@ export ORGANISATION_ID=6284993b76172b0235aac138
 ### Create a team
 
 ```
-curl -v -d '{"name":"Sales Team", "description":"Super Sales Team"}' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/teams
+curl -v -d '{"name":"Engineering Team", "description":"Super Engineering Team"}' -H "Content-Type: application/json" -X POST http://localhost:8080/api/v1/${ORGANISATION_ID}/teams
 export TEAM_ID=62852b807879ba7df8ee57f9
 ```
 

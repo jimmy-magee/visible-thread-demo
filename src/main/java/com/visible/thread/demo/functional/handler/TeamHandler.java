@@ -261,7 +261,7 @@ public class TeamHandler {
      */
     public Mono<ServerResponse> deleteTeam(ServerRequest request) {
 
-        String id = request.pathVariable("id");
+        String id = request.pathVariable("teamId");
 
         return this.teamRepository.findById(id)
                 .flatMap(savedTeam -> ServerResponse.ok()
