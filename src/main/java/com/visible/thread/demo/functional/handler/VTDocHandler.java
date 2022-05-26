@@ -84,6 +84,8 @@ public class VTDocHandler {
 
         String userId = request.pathVariable("userId");
 
+        log.debug("Looking up vtdocs by user id {} ", userId);
+
         Flux<VTDocRepresentation> vtDocRepresentationFlux = this.vtDocService.findByUserId(userId);
 
         return ServerResponse.ok()

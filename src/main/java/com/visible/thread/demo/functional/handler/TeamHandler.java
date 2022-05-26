@@ -280,7 +280,7 @@ public class TeamHandler {
 
         Mono<List<User>> userListMono = this.userRepository.findAll()
                 .filter(user -> team.getUsers().contains(user.getId()))
-                .collectSortedList();
+                .collectList();
 
         return userListMono.map(users -> {
             return TeamRepresentation.builder()
