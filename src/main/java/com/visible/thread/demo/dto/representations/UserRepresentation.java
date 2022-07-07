@@ -1,6 +1,8 @@
 package com.visible.thread.demo.dto.representations;
 
 import lombok.*;
+import org.springframework.core.io.buffer.DataBuffer;
+import reactor.core.publisher.Flux;
 
 import java.io.Serializable;
 
@@ -28,5 +30,9 @@ public class UserRepresentation implements Serializable {
     private Boolean isEmailVerified;
 
     private String email;
+
+    private String imageId;
+
+    private byte[] image;
 
 }

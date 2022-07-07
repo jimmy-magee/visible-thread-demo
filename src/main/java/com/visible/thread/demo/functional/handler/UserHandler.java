@@ -12,9 +12,15 @@ import com.visible.thread.demo.model.Team;
 import com.visible.thread.demo.model.User;
 import com.visible.thread.demo.repository.TeamRepository;
 import com.visible.thread.demo.repository.UserRepository;
+import com.visible.thread.demo.service.IUserService;
 import com.visible.thread.demo.service.IVTDocService;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.multipart.Part;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -34,15 +40,18 @@ public class UserHandler {
     private final IVTDocService vtDocService;
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
+    private final IUserService userService;
 
 
     /**
      *
+     * @param userService
      * @param vtDocService
      * @param userRepository
      * @param teamRepository
      */
-    public UserHandler(final IVTDocService vtDocService, final UserRepository userRepository, final TeamRepository teamRepository) {
+    public UserHandler(final IUserService userService, final IVTDocService vtDocService, final UserRepository userRepository, final TeamRepository teamRepository) {
+        this.userService = userService;
         this.vtDocService = vtDocService;
         this.userRepository = userRepository;
         this.teamRepository = teamRepository;
@@ -76,14 +85,28 @@ public class UserHandler {
     public Mono<ServerResponse> getUserById(ServerRequest request) {
 
         String id = request.pathVariable("userId");
-        log.debug("Looking up users by user id {}", id);
 
-        Mono<UserRepresentation> userMono = this.userRepository.findById(id)
-                .flatMap(this::toUserRepresentation);
+        Mono<UserRepresentation> userMono = this.userService.getUserById(id);
 
         return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
                 .body(BodyInserters.fromPublisher(userMono, UserRepresentation.class));
+
+    }
+
+    /**
+     * @param request
+     * @return response
+     */
+    public Mono<ServerResponse> getUserImageById(ServerRequest request) {
+
+        String id = request.pathVariable("id");
+
+        Flux<DataBuffer> dataBufferFlux = this.userService.getUserImageByFileId(id);
+
+        return ServerResponse.ok()
+                .contentType(APPLICATION_JSON)
+                .body(BodyInserters.fromPublisher(dataBufferFlux, DataBuffer.class));
 
     }
 
@@ -113,40 +136,33 @@ public class UserHandler {
 
         String organisationId = request.pathVariable("organisationId");
         String teamId = request.pathVariable("teamId");
+        Flux<Part> partFlux = request.body(BodyExtractors.toParts());
+        Mono<MultiValueMap<String, Part>> multiPartFormMono = request.body(BodyExtractors.toMultipartData());
 
-        log.debug("Creating new user for organisation {} and assigning to team {}", organisationId, teamId);
+        log.debug("Uploading new user form for team {} in organisation {}", teamId, organisationId);
 
-        Mono<NewUserForm> formMono = request.bodyToMono(NewUserForm.class);
-        Mono<Team> teamMono = this.teamRepository.findById(teamId);
+       // multiPartFormMono.flatMap( form -> {
 
-        Mono<UserRepresentation> savedUserMono = formMono
-                .map(form -> User.builder()
-                        .firstname(form.getFirstName())
-                        .lastname(form.getLastName())
-                        .organisationId(organisationId)
-                        .email(form.getEmail())
-                        .phone(form.getPhone())
-                        .isEmailVerified(false)
-                        .createdDate(LocalDateTime.now())
-                        .build())
-                .flatMap(userRepository::save)
-                .flatMap(this::toUserRepresentation);
+            Mono<UserRepresentation> savedUserMono = this.userService.createUser(multiPartFormMono, organisationId, teamId);
 
-        return Mono.zip(teamMono, savedUserMono)
-                .flatMap((Tuple2<Team, UserRepresentation> data) -> {
+            return ServerResponse.ok()
+                    .contentType(APPLICATION_JSON)
+                    .body(BodyInserters.fromPublisher(savedUserMono, UserRepresentation.class));
+       // );
 
-                    Team team = data.getT1();
-                    UserRepresentation user = data.getT2();
 
-                    if (!team.getUsers().contains(user.getId())) {
-                        team.getUsers().add(user.getId());
-                    }
+    }
 
-                    return this.teamRepository.save(team)
-                            .flatMap(updatedTeam -> ServerResponse.ok()
-                                    .contentType(APPLICATION_JSON)
-                                    .body(BodyInserters.fromValue(user)));
-                });
+    public Mono<ServerResponse> downloadVTDocContentById(ServerRequest request) {
+
+        String id = request.pathVariable("id");
+
+        Flux<DataBuffer> downloadFileFlux = this.vtDocService.getDownloadStream(id);
+
+        return ServerResponse.ok()
+                //.contentType(APPLICATION_JSON)
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(BodyInserters.fromPublisher(downloadFileFlux, DataBuffer.class));
 
     }
 
@@ -291,6 +307,8 @@ public class UserHandler {
                         .lastname(user.getLastname())
                         .email(user.getEmail())
                         .isEmailVerified(user.getIsEmailVerified())
+                        .imageId(user.getImageId())
+                        //.image(user.getImage())
                         .build()
         );
 

@@ -1,8 +1,10 @@
 package com.visible.thread.demo.model;
 
 import lombok.*;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import reactor.core.publisher.Flux;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -32,6 +34,10 @@ public final class User implements Serializable {
     private String lastname;
 
     private String phone;
+
+    private String imageId;
+
+    private byte[] image;
 
     private LocalDateTime createdDate;
 

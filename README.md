@@ -165,6 +165,7 @@ For further reference, please consider the following sections:
 * [Create an OCI image](https://docs.spring.io/spring-boot/docs/2.6.7/maven-plugin/reference/html/#build-image)
 * [Spring Reactive Web](https://docs.spring.io/spring-boot/docs/2.6.7/reference/htmlsingle/#web.reactive)
 * [Spring Data Reactive MongoDB](https://docs.spring.io/spring-boot/docs/2.6.7/reference/htmlsingle/#boot-features-mongodb)
+* [Reactor Operator Docs](https://projectreactor.io/docs/core/release/reference/#which.peeking)
 
 ### Guides
 The following guides illustrate how to use some features concretely:

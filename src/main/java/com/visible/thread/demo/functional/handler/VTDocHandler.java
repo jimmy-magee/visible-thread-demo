@@ -6,6 +6,7 @@ import com.visible.thread.demo.dto.representations.VTDocRepresentation;
 import com.visible.thread.demo.service.IVTDocService;
 
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.Part;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyExtractors;
@@ -105,7 +106,8 @@ public class VTDocHandler {
         Flux<DataBuffer> downloadFileFlux = this.vtDocService.getDownloadStream(id);
 
         return ServerResponse.ok()
-                .contentType(APPLICATION_JSON)
+                //.contentType(APPLICATION_JSON)
+                .contentType(MediaType.IMAGE_JPEG)
                 .body(BodyInserters.fromPublisher(downloadFileFlux, DataBuffer.class));
 
     }
@@ -133,7 +135,6 @@ public class VTDocHandler {
       return ServerResponse.ok()
                 .contentType(APPLICATION_JSON)
                 .body(BodyInserters.fromPublisher(vtDocRepresentationMono, VTDocRepresentation.class));
-
     }
 
 

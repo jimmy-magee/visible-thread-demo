@@ -22,5 +22,6 @@ public class UpdateUserForm implements Serializable {
     private String lastName;
     private String email;
     private String phone;
+    private String imageUrl;
 
 }

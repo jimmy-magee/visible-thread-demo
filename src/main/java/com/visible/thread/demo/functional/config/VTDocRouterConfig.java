@@ -8,8 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.http.MediaType.MULTIPART_FORM_DATA;
+import static org.springframework.http.MediaType.*;
 import static org.springframework.web.reactive.function.server.RequestPredicates.*;
 import static org.springframework.web.reactive.function.server.RequestPredicates.accept;
 
@@ -29,7 +28,7 @@ public class VTDocRouterConfig {
                 .andRoute(GET("/api/v1/vtdocs/{organisationId}/teams/{teamId}/date/{date}").and(accept(APPLICATION_JSON)), vTDocHandler::getVTDocsByTeamIdAndDate)
                 .andRoute(GET("/api/v1/vtdocs/{organisationId}/users/{userId}").and(accept(APPLICATION_JSON)), vTDocHandler::getVTDocsByUserId)
                 .andRoute(GET("/api/v1/vtdocs/{organisationId}/users/{userId}/{id}").and(accept(APPLICATION_JSON)), vTDocHandler::getVTDocById)
-                .andRoute(GET("/api/v1/vtdocs/{organisationId}/users/{userId}/{id}/download").and(accept(APPLICATION_JSON)), vTDocHandler::downloadVTDocContentById)
+                .andRoute(GET("/api/v1/vtdocs/{organisationId}/users/{userId}/{id}/download").and(accept(IMAGE_JPEG)), vTDocHandler::downloadVTDocContentById)
                 .andRoute(POST("/api/v1/vtdocs/{organisationId}/teams/{teamId}/users/{userId}").and(accept(MULTIPART_FORM_DATA)), vTDocHandler::uploadVTDoc)
                 .andRoute(DELETE("/api/v1/vtdocs/{organisationId}/users/{userId}/{id}").and(accept(APPLICATION_JSON)), vTDocHandler::deleteVTDoc);
     }
